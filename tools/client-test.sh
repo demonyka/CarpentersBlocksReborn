@@ -13,7 +13,7 @@ export JAVA_HOME="${JAVA_HOME:-$(ls -d "$HOME"/.jdks/jdk-17*/ 2>/dev/null | head
 
 rm -rf "$RUN/saves" "$RUN/screenshots" "$RUN/cbtest-report.txt"
 cd "$ROOT"
-timeout 420 ./gradlew ":$PLATFORM:runClientTest" --console=plain > "$RUN.log" 2>&1
+timeout 420 ./gradlew ":$PLATFORM:runClientTest" ${GRADLE_ARGS:-} --console=plain > "$RUN.log" 2>&1
 CODE=$?
 if [ "$CODE" = 124 ]; then
   echo "Timed out; killing the dev client of this project."

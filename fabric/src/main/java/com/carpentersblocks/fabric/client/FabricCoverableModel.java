@@ -2,6 +2,7 @@ package com.carpentersblocks.fabric.client;
 
 import com.carpentersblocks.blockentity.RenderData;
 import com.carpentersblocks.client.render.BoundCoverModel;
+import com.carpentersblocks.client.render.CoverModelBuilder;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachedBlockView;
@@ -50,9 +51,14 @@ public final class FabricCoverableModel implements BakedModel, FabricBakedModel 
         context.fallbackConsumer().accept(base);
     }
 
+    /**
+     * Used by renderers without Fabric Rendering API support (e.g. Sodium without Indium):
+     * they cannot pass the block entity data, so the shape is drawn without covers rather
+     * than not at all.
+     */
     @Override
     public List<BakedQuad> getQuads(BlockState state, Direction side, Random rand) {
-        return base.getQuads(state, side, rand);
+        return CoverModelBuilder.quads(state, side, rand, RenderData.EMPTY, base);
     }
 
     @Override

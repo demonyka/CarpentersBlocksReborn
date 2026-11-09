@@ -73,3 +73,16 @@ loom {
         defaultRefmapName = "carpentersblocks-fabric-refmap.json"
     }
 }
+
+// Compatibility check: ./gradlew :fabric:runClientTest -PwithSodium (Sodium + Indium in the dev client).
+repositories {
+    maven { url "https://api.modrinth.com/maven" }
+}
+dependencies {
+    if (project.hasProperty("withSodium")) {
+        modLocalRuntime "maven.modrinth:sodium:mc1.16.5-0.2.0"
+        if (!project.hasProperty("noIndium")) {
+            modLocalRuntime "maven.modrinth:indium:1.0.0+mc1.16.5"
+        }
+    }
+}
