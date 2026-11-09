@@ -1,0 +1,15 @@
+pluginManagement {
+    repositories {
+        maven { url "https://maven.fabricmc.net/" }
+        maven { url "https://maven.architectury.dev/" }
+        maven { url "https://maven.minecraftforge.net/" }
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = "carpentersblocks"
+
+// core: plain Java, no Minecraft. Shared by every Minecraft version (1.16.5 now, 1.12.2 later).
+include "core"
+// Minecraft 1.16.5 via Architectury: common code + thin Fabric/Forge wrappers.
+include "common", "fabric", "forge"

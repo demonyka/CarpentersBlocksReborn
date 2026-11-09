@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["GGG", "RLR", "YYY"],
+  "key": { "G": { "item": "minecraft:glass" }, "R": { "item": "minecraft:redstone" }, "L": { "item": "minecraft:lapis_lazuli" }, "Y": { "item": "carpentersblocks:block" } },
+  "result": { "item": "carpentersblocks:daylight_sensor", "count": 1 }
+}

@@ -1,0 +1,43 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # JDK 8 runs the real 1.16.5 servers; JDK 17 (set up last) runs Gradle.
+      - uses: actions/setup-java@v4
+        id: java8
+        with:
+          distribution: temurin
+          java-version: 8
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Build and unit-test
+        run: ./gradlew build --console=plain
+
+      - name: Smoke test on a real Fabric server
+        run: tools/smoke-test.sh fabric
+        env:
+          SERVER_JAVA: ${{ steps.java8.outputs.path }}/bin/java
+
+      - name: Smoke test on a real Forge server
+        run: tools/smoke-test.sh forge
+        env:
+          SERVER_JAVA: ${{ steps.java8.outputs.path }}/bin/java
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: carpentersblocks-jars
+          path: |
+            fabric/build/libs/carpentersblocks-*-fabric.jar
+            forge/build/libs/carpentersblocks-*-forge.jar

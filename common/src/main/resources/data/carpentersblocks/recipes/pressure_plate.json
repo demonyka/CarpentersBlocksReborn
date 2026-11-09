@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["YY"],
+  "key": { "Y": { "item": "carpentersblocks:block" } },
+  "result": { "item": "carpentersblocks:pressure_plate", "count": 1 }
+}

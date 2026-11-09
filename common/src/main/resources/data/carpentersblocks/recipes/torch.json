@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["C", "Y"],
+  "key": { "C": { "item": "minecraft:coal" }, "Y": { "item": "carpentersblocks:block" } },
+  "result": { "item": "carpentersblocks:torch", "count": 8 }
+}

@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["X", "Y"],
+  "key": { "X": { "item": "minecraft:stick" }, "Y": { "item": "carpentersblocks:block" } },
+  "result": { "item": "carpentersblocks:lever", "count": 1 }
+}

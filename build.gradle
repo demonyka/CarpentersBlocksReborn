@@ -1,0 +1,53 @@
+plugins {
+    id "dev.architectury.loom" version "1.7-SNAPSHOT" apply false
+    id "architectury-plugin" version "3.4-SNAPSHOT"
+    id "com.github.johnrengelman.shadow" version "8.1.1" apply false
+}
+
+architectury {
+    minecraft = project.minecraft_version
+}
+
+allprojects {
+    group = project.maven_group
+    version = project.mod_version
+
+    repositories {
+        mavenCentral()
+    }
+
+    plugins.withType(JavaPlugin).configureEach {
+        java {
+            // Gradle and javac run on 17; Jabel lets us use modern syntax while emitting
+            // Java 8 bytecode, which both 1.16.5 and 1.12.2 servers can load.
+            toolchain { languageVersion = JavaLanguageVersion.of(17) }
+        }
+        dependencies {
+            annotationProcessor "com.github.bsideup.jabel:jabel-javac-plugin:1.0.0"
+            compileOnly "com.github.bsideup.jabel:jabel-javac-plugin:1.0.0"
+        }
+        tasks.withType(JavaCompile).configureEach {
+            options.encoding = "UTF-8"
+            sourceCompatibility = 17
+            options.release = 8
+        }
+    }
+}
+
+// Minecraft modules (everything except :core).
+configure(subprojects.findAll { it.name != "core" }) {
+    apply plugin: "dev.architectury.loom"
+    apply plugin: "architectury-plugin"
+
+    base { archivesName = "${rootProject.archives_base_name}-${project.name}" }
+
+    loom {
+        silentMojangMappingsLicense()
+    }
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+        mappings loom.officialMojangMappings()
+        implementation project(":core")
+    }
+}

@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["XXX", "XYX", "XXX"],
+  "key": {
+    "X": { "item": "minecraft:stick" },
+    "Y": { "tag": "minecraft:planks" }
+  },
+  "result": { "item": "carpentersblocks:block", "count": 5 }
+}

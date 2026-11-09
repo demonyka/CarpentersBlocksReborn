@@ -1,0 +1,5 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [ { "item": "carpentersblocks:slope_oblique_exterior" } ],
+  "result": { "item": "carpentersblocks:slope_prism" }
+}

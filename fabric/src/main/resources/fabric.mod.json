@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "carpentersblocks",
+  "version": "${version}",
+  "name": "Carpenter's Blocks",
+  "description": "Slopes and vanilla-inspired blocks that take covers, side covers, dyes and illumination.",
+  "authors": ["Mineshopper (original mod)"],
+  "contact": {
+    "sources": "https://github.com/Mineshopper/carpentersblocks"
+  },
+  "license": "LGPL-2.1",
+  "icon": "pack.png",
+  "environment": "*",
+  "accessWidener": "carpentersblocks.accesswidener",
+  "mixins": ["carpentersblocks-fabric.mixins.json"],
+  "entrypoints": {
+    "main": ["com.carpentersblocks.fabric.CarpentersBlocksFabric"],
+    "client": ["com.carpentersblocks.fabric.CarpentersBlocksFabricClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.14.0",
+    "fabric": "*",
+    "minecraft": "1.16.x"
+  }
+}

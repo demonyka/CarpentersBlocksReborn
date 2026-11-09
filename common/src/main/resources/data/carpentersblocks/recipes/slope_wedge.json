@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["  X", " XY", "XYY"],
+  "key": {
+    "X": { "item": "minecraft:stick" },
+    "Y": { "item": "carpentersblocks:block" }
+  },
+  "result": { "item": "carpentersblocks:slope_wedge", "count": 6 }
+}

@@ -1,0 +1,15 @@
+plugins {
+    id "java-library"
+}
+
+base { archivesName = "${rootProject.archives_base_name}-core" }
+
+dependencies {
+    testImplementation platform("org.junit:junit-bom:${rootProject.junit_version}")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+test {
+    useJUnitPlatform()
+}

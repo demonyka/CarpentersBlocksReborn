@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "shape=full": { "model": "carpentersblocks:block/block_full" },
+    "shape=down": { "model": "carpentersblocks:block/block_down" },
+    "shape=up": { "model": "carpentersblocks:block/block_up" },
+    "shape=north": { "model": "carpentersblocks:block/block_north" },
+    "shape=south": { "model": "carpentersblocks:block/block_south" },
+    "shape=west": { "model": "carpentersblocks:block/block_west" },
+    "shape=east": { "model": "carpentersblocks:block/block_east" }
+  }
+}

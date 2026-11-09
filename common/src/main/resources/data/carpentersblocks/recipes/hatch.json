@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["YYY", "YYY"],
+  "key": { "Y": { "item": "carpentersblocks:block" } },
+  "result": { "item": "carpentersblocks:hatch", "count": 1 }
+}

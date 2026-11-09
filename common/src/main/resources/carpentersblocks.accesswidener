@@ -1,0 +1,4 @@
+accessWidener v1 named
+
+# Texture of a quad: needed to re-use a cover block's textures on our shapes.
+accessible field net/minecraft/client/renderer/block/model/BakedQuad sprite Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;

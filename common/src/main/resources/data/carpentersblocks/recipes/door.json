@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["YY", "YY", "YY"],
+  "key": { "Y": { "item": "carpentersblocks:block" } },
+  "result": { "item": "carpentersblocks:door", "count": 1 }
+}

@@ -1,0 +1,4 @@
+{
+  "parent": "block/block",
+  "textures": { "particle": "carpentersblocks:block/general/uncovered_full_frame" }
+}

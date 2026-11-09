@@ -1,0 +1,75 @@
+plugins {
+    id "com.github.johnrengelman.shadow"
+}
+
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
+configurations {
+    common { canBeResolved = true; canBeConsumed = false }
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentFabric.extendsFrom common
+    shadowBundle { canBeResolved = true; canBeConsumed = false }
+}
+
+dependencies {
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+
+    common(project(path: ":common", configuration: "namedElements")) { transitive false }
+    shadowBundle project(path: ":common", configuration: "transformProductionFabric")
+    shadowBundle project(":core")
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+    // Fabric Loader looks for the access widener inside this mod's own resources,
+    // including in the dev environment where :common is a separate classpath entry.
+    from(project(":common").loom.accessWidenerPath)
+}
+
+shadowJar {
+    configurations = [project.configurations.shadowBundle]
+    archiveClassifier = "dev-shadow"
+    // The access widener now comes from both :fabric and :common; keep one copy.
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+remapJar {
+    archiveBaseName = rootProject.archives_base_name
+    inputFile.set shadowJar.archiveFile
+    archiveClassifier = null
+    archiveVersion = "${project.version}+mc${rootProject.minecraft_version}-fabric"
+}
+
+jar { archiveClassifier = "dev" }
+
+// ./gradlew :<platform>:runClientTest  - automated client run with screenshots (see ClientTestHarness).
+loom {
+    runs {
+        clientTest {
+            client()
+            configName = "Client Test"
+            runDir = "run-clienttest"
+            // -PcbTest=mp-a / mp-b and -PcbUser=... select the multiplayer roles (tools/mp-test.sh).
+            vmArg "-Dcarpentersblocks.clientTest=${project.findProperty('cbTest') ?: 'true'}"
+            programArgs "--width", "1280", "--height", "720", "--username", "${project.findProperty('cbUser') ?: 'CBTester'}"
+        }
+    }
+}
+
+loom {
+    accessWidenerPath = project(":common").loom.accessWidenerPath
+}
+
+loom {
+    mixin {
+        defaultRefmapName = "carpentersblocks-fabric-refmap.json"
+    }
+}
