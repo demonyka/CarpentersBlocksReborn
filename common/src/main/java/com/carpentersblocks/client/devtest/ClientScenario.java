@@ -67,6 +67,10 @@ final class ClientScenario {
         ClientTestHarness.waitUntil("join world",
             () -> mc.player != null && mc.level != null && mc.getSingleplayerServer() != null && mc.screen == null, 2400, 40);
 
+        if (ClientTestHarness.mode().equals("showcase")) {
+            ShowcaseScenario.build();
+            return;
+        }
         if (ClientTestHarness.mode().equals("look")) {
             LookScenario.build();
             return;

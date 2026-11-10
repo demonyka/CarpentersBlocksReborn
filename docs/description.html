@@ -1,0 +1,62 @@
+<p>A from-scratch rewrite of <strong>Carpenter's Blocks</strong> for Minecraft 1.16.5, on both <strong>Forge</strong> and <strong>Fabric</strong>. Frame blocks, slopes, stairs, doors and redstone parts that take the look of any block you put on them, with the controls and behaviour of the 1.7.10 version.</p>
+
+<p>On Fabric it needs <strong>Fabric API</strong>. With Sodium, also install <strong>Indium</strong>, or the blocks are drawn without their covers.</p>
+
+<h2>How it works</h2>
+
+<p>Place a Carpenter's block, then right-click it with almost any full block: it takes that block's texture. Sneak and right-click with a dye to tint it, or with glowstone dust to make it glow. The Carpenter's Hammer changes the shape and takes covers back off.</p>
+
+<p>Covers look as they do on the real block: grass and leaves keep their biome colour, logs keep their rings, stained glass and ice stay see-through.</p>
+
+<h2>Blocks</h2>
+
+<ul>
+  <li><strong>Carpenter's Block</strong>: a full block or a slab on any of the six sides.</li>
+  <li><strong>Slopes</strong>: 65 shapes in five kinds (wedges, corners, oblique corners, prisms, prism wedges). They join their neighbours into roofs and corners as you place them. Hold a slope, sneak and scroll to switch the kind.</li>
+  <li><strong>Stairs</strong> and the <strong>Collapsible Block</strong>, whose four corners you raise and lower with the hammer to shape terrain.</li>
+  <li><strong>Barrier and Gate</strong> in several fence styles, <strong>Door</strong> in six styles, <strong>Hatch</strong>, <strong>Garage Door</strong> that hangs from the ceiling down to the floor, <strong>Ladder</strong>.</li>
+  <li><strong>Redstone</strong>: button, lever, and a pressure plate that reacts to players, monsters, animals or everything. Each can invert its signal.</li>
+  <li><strong>Torch and Lantern</strong>: the torch goes out in the rain and lights up again afterwards.</li>
+</ul>
+
+<h2>Controls</h2>
+
+<table>
+  <thead>
+    <tr><th>Action</th><th>Result</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Right-click with a block</td><td>Cover the Carpenter's block</td></tr>
+    <tr><td>Sneak + right-click with a block on a covered block</td><td>Cover just that side with another block</td></tr>
+    <tr><td>Sneak + right-click with a dye / glowstone dust</td><td>Tint / make it glow</td></tr>
+    <tr><td>Sneak + left-click with the hammer</td><td>Take off the glow, dye or cover</td></tr>
+    <tr><td>Hammer on a slope or stairs</td><td>Left-click turns it, right-click picks the next shape</td></tr>
+    <tr><td>Hammer on other blocks</td><td>Change style, hinge, post, signal polarity or trigger</td></tr>
+    <tr><td>Sneak + scroll with a slope in hand</td><td>Switch the kind of slope</td></tr>
+  </tbody>
+</table>
+
+<h2>Works with</h2>
+
+<ul>
+  <li><strong>OptiFine</strong> (Forge, tested with 1.16.5 HD U G7): connected textures apply to covers. A wall of glass and glass-covered Carpenter's blocks looks like one sheet.</li>
+  <li><strong>Chisel / CTM</strong> (Forge): covers made of connected-texture blocks join each other and the real blocks around them.</li>
+  <li><strong>Jade / HWYLA</strong> (Forge): the tooltip names the block a Carpenter's block is covered with.</li>
+  <li><strong>Claim and protection mods</strong>: every click goes through the normal interaction events, so protected areas stay protected.</li>
+</ul>
+
+<h2>For server owners</h2>
+
+<ul>
+  <li>The server decides everything; clients only predict. Block data from clients and from saved items is validated.</li>
+  <li>Recipes, drops and the lists of what counts as a cover are plain data: change them with a data pack and <code>/reload</code>.</li>
+  <li>Every build is started on real dedicated Forge and Fabric servers and run through automated checks.</li>
+</ul>
+
+<h2>Not included</h2>
+
+<p>The safe, bed, flower pot, tile, daylight sensor, chisel patterns and overlays of the 1.7.10 version are not part of this rewrite.</p>
+
+<h2>Credits</h2>
+
+<p>Carpenter's Blocks was created by <strong>Mineshopper</strong> and contributors; the design, the textures and the logo are theirs and stay under LGPL-2.1. This rewrite is by <strong>demonyga</strong>, its code is under the Apache License 2.0. Source on <a href="https://github.com/demonyka/CarpentersBlocksReborn">GitHub</a>.</p>

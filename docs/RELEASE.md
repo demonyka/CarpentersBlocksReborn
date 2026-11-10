@@ -18,7 +18,7 @@
 | License | Custom: `Apache-2.0 AND LGPL-2.1-only`, ссылка https://github.com/demonyka/CarpentersBlocksReborn/blob/main/NOTICE |
 | Source code | https://github.com/demonyka/CarpentersBlocksReborn |
 | Issue tracker | https://github.com/demonyka/CarpentersBlocksReborn/issues |
-| Gallery | `docs/screenshots/`: slopes-roof, slope-shapes, all-blocks, doors, connected-glass-optifine, translucent-covers, chisel-connected, jade-tooltip |
+| Gallery | `docs/screenshots/`. Первым поставь `cottage`, затем `cottage-front`, `yard`, `garage-door`, `roof-skylight`, `cottage-dusk`, `night-lanterns`, `overview`; дальше технические: `slopes-roof`, `slope-shapes`, `all-blocks`, `doors`, `connected-glass-optifine`, `translucent-covers`, `chisel-connected`, `jade-tooltip` |
 
 ID проекта (8 символов) показан в настройках проекта. Он понадобится в шаге 3.
 
@@ -33,7 +33,7 @@ ID проекта (8 символов) показан в настройках п
 | Main category | Cosmetic |
 | Additional categories | Redstone |
 | Logo | `docs/icon.png` или `docs/icon-roof.png` (нужно не меньше 400×400, обе больше) |
-| Description | `docs/description.md`, редактор переключи на Markdown |
+| Description | `docs/description.html` (HTML, вставляется через кнопку исходного кода в редакторе) или `docs/description.md` в режиме Markdown |
 | License | Apache License 2.0; в описании сказано, что текстуры и логотип остаются под LGPL-2.1 |
 | Source | https://github.com/demonyka/CarpentersBlocksReborn |
 | Issues | https://github.com/demonyka/CarpentersBlocksReborn/issues |
