@@ -10,7 +10,7 @@
     "sources": "https://github.com/demonyka/CarpentersBlocksReborn",
     "issues": "https://github.com/demonyka/CarpentersBlocksReborn/issues"
   },
-  "license": "LGPL-2.1",
+  "license": "Apache-2.0 AND LGPL-2.1-only",
   "icon": "pack.png",
   "environment": "*",
   "accessWidener": "carpentersblocks.accesswidener",

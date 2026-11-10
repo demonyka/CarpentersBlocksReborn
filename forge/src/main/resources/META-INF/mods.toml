@@ -1,6 +1,6 @@
 modLoader = "javafml"
 loaderVersion = "[36,)"
-license = "LGPL-2.1"
+license = "Apache-2.0 (code), LGPL-2.1 (original textures)"
 issueTrackerURL = "https://github.com/demonyka/CarpentersBlocksReborn/issues"
 
 [[mods]]

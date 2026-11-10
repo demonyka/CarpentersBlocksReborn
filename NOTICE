@@ -1,0 +1,15 @@
+Carpenter's Blocks Reborn
+Copyright 2026 disaev
+
+The source code of this project is licensed under the Apache License, Version 2.0
+(see LICENSE).
+
+This project is a rewrite of the Minecraft mod "Carpenter's Blocks" by Mineshopper and
+contributors (https://github.com/Mineshopper/carpentersblocks).
+
+The following files are taken from the original mod, unmodified apart from file names and
+the scaled-up logo, and remain under the GNU Lesser General Public License, version 2.1
+(see LICENSE-ASSETS). They are not covered by the Apache License:
+
+  common/src/main/resources/assets/carpentersblocks/textures/**
+  common/src/main/resources/pack.png

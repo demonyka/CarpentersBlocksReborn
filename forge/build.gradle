@@ -26,8 +26,11 @@ dependencies {
 }
 
 processResources {
-    // LGPL: the licence text travels with the binary.
+    // The licences travel with the binary: Apache 2.0 for the code, LGPL 2.1 for the
+    // textures and logo of the original mod (see NOTICE).
     from(rootProject.file("LICENSE")) { rename { "LICENSE_carpentersblocks.txt" } }
+    from(rootProject.file("LICENSE-ASSETS")) { rename { "LICENSE-ASSETS_carpentersblocks.txt" } }
+    from(rootProject.file("NOTICE")) { rename { "NOTICE_carpentersblocks.txt" } }
     inputs.property "version", project.version
     filesMatching("META-INF/mods.toml") {
         expand "version": project.version
