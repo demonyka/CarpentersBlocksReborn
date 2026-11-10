@@ -1,11 +1,13 @@
 modLoader = "javafml"
 loaderVersion = "[36,)"
 license = "LGPL-2.1"
+issueTrackerURL = "https://github.com/demonyka/CarpentersBlocksReborn/issues"
 
 [[mods]]
 modId = "carpentersblocks"
 version = "${version}"
 displayName = "Carpenter's Blocks"
+displayURL = "https://github.com/demonyka/CarpentersBlocksReborn"
 authors = "disaev"
 credits = "Mineshopper and contributors: the original Carpenter's Blocks, whose design and textures this rewrite uses (LGPL-2.1)"
 logoFile = "pack.png"

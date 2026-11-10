@@ -6,6 +6,10 @@
   "description": "Slopes and vanilla-inspired blocks that take covers, side covers, dyes and illumination.",
   "authors": ["disaev"],
   "contributors": ["Mineshopper and contributors (the original Carpenter's Blocks: design and textures)"],
+  "contact": {
+    "sources": "https://github.com/demonyka/CarpentersBlocksReborn",
+    "issues": "https://github.com/demonyka/CarpentersBlocksReborn/issues"
+  },
   "license": "LGPL-2.1",
   "icon": "pack.png",
   "environment": "*",
