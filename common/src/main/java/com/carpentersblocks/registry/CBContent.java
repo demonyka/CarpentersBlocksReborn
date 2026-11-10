@@ -40,7 +40,11 @@ public final class CBContent {
     public static final Supplier<SlopeBlock> SLOPE = Platform.registerBlock("slope",
         () -> new SlopeBlock(BlockBehaviour.Properties.of(Material.WOOD).strength(1.5F).sound(SoundType.WOOD)));
 
-    /** The five slope items; the wedge is registered last so it is the slope block's own item. */
+    /**
+     * The five slope items; the wedge is registered last so it is the slope block's own item.
+     * Only the wedge is listed in the creative tab: the kinds are one block, switched with
+     * Shift + mouse wheel as in 1.7.10, and five near-identical entries read as duplicates.
+     */
     public static final Map<SlopePlacement.Kind, Supplier<SlopeItem>> SLOPE_ITEMS = registerSlopeItems();
 
     public static final Supplier<HammerItem> HAMMER = Platform.registerItem("hammer",
@@ -60,7 +64,8 @@ public final class CBContent {
         order.add(SlopePlacement.Kind.WEDGE);
         for (SlopePlacement.Kind kind : order) {
             items.put(kind, Platform.registerItem(SlopeItem.idOf(kind),
-                () -> new SlopeItem(SLOPE.get(), kind, new Item.Properties().tab(TAB))));
+                () -> new SlopeItem(SLOPE.get(), kind,
+                    kind == SlopePlacement.Kind.WEDGE ? new Item.Properties().tab(TAB) : new Item.Properties())));
         }
         return Collections.unmodifiableMap(items);
     }
@@ -93,7 +98,8 @@ public final class CBContent {
 
     /**
      * Registers a coverable block, and its item unless {@code itemFactory} is null.
-     * Its item shows {@code display} (or the default state) in inventories.
+     * Its item shows the state {@code display} gives in inventories, or its own JSON item
+     * model when {@code display} is null.
      */
     static <B extends net.minecraft.world.level.block.Block> Supplier<B> block(String id, Supplier<B> factory,
                                                                                  java.util.function.Function<B, Item> itemFactory,
@@ -102,7 +108,9 @@ public final class CBContent {
         BLOCKS.add(block);
         if (itemFactory != null) {
             Platform.registerItem(id, () -> itemFactory.apply(block.get()));
-            DISPLAY_STATES.put(id, () -> display.apply(block.get()));
+            if (display != null) {
+                DISPLAY_STATES.put(id, () -> display.apply(block.get()));
+            }
         }
         return block;
     }

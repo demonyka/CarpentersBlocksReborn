@@ -77,6 +77,10 @@ public final class Interactions {
 
         AttributeKey target = AttributeRules.addTarget(kind, player.isShiftKeyDown(), Sides.toCore(face), be,
             location -> block.canCover(state, location));
+        if (target != null && target.type == AttributeType.COVER && !target.location.isHost()
+            && be.getItem(AttributeKey.of(AttributeType.COVER, AttributeLocation.HOST)).getItem() == held.getItem()) {
+            target = null; // a side cover of the same block as the host would change nothing
+        }
         if (target == null) {
             // Slot taken: open the door; blocks without a use let vanilla place the held block.
             return activate(block, state, player, level, hand, hit);

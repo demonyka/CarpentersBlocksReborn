@@ -86,6 +86,11 @@ public final class CarpentersBlocksFabricClient implements ClientModInitializer 
             return null;
         });
 
+        // Slopes are outlined along their drawn faces, not their boxy click shape.
+        net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents.BLOCK_OUTLINE.register((context, outline) ->
+            !com.carpentersblocks.client.render.ModelOutline.render(context.matrixStack(), outline.vertexConsumer(),
+                context.world(), outline.blockPos(), outline.blockState(), outline.cameraX(), outline.cameraY(), outline.cameraZ()));
+
         if (com.carpentersblocks.util.DevTests.client()) {
             ClientTickEvents.END_CLIENT_TICK.register(client -> ClientTestHarness.tick());
         }

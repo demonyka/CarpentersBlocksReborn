@@ -216,4 +216,15 @@ public class CollapsibleBlock extends CoverableBlock {
                                   net.minecraft.world.level.pathfinder.PathComputationType type) {
         return false;
     }
+
+    @Override
+    public boolean hasModelOutline(BlockState state) {
+        return true;
+    }
+
+    /** 1.7.10: plain wood. */
+    @Override
+    public net.minecraft.resources.ResourceLocation uncoveredTexture(BlockState state, Polygon polygon) {
+        return com.carpentersblocks.util.UncoveredTextures.SOLID;
+    }
 }

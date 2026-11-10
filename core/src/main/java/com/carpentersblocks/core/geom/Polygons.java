@@ -145,6 +145,28 @@ public final class Polygons {
         }
     }
 
+    /**
+     * The face showing exactly the rectangle (u0, v0)..(u1, v1) of its texture, in pixels:
+     * its current coordinates are stretched from their bounding rectangle onto that one.
+     * For parts drawn from a fixed region of a texture (the stick of a lever, a torch head).
+     */
+    public static Polygon fitUvs(Polygon polygon, float u0, float v0, float u1, float v1) {
+        float minU = Float.MAX_VALUE, minV = Float.MAX_VALUE, maxU = -Float.MAX_VALUE, maxV = -Float.MAX_VALUE;
+        for (int i = 0; i < 4; i++) {
+            minU = Math.min(minU, polygon.uvs[i * 2]);
+            maxU = Math.max(maxU, polygon.uvs[i * 2]);
+            minV = Math.min(minV, polygon.uvs[i * 2 + 1]);
+            maxV = Math.max(maxV, polygon.uvs[i * 2 + 1]);
+        }
+        float du = Math.max(maxU - minU, 1e-6f), dv = Math.max(maxV - minV, 1e-6f);
+        float[] uvs = new float[8];
+        for (int i = 0; i < 4; i++) {
+            uvs[i * 2] = u0 + (polygon.uvs[i * 2] - minU) / du * (u1 - u0);
+            uvs[i * 2 + 1] = v0 + (polygon.uvs[i * 2 + 1] - minV) / dv * (v1 - v0);
+        }
+        return polygon.withUvs(uvs);
+    }
+
     /** Whether the face's texture coordinates are the world-aligned ones of {@link #uv} (not a rotated part). */
     public static boolean hasWorldUvs(Polygon polygon) {
         for (int i = 0; i < 4; i++) {

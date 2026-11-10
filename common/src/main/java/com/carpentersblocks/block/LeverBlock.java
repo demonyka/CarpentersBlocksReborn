@@ -84,7 +84,13 @@ public class LeverBlock extends PolarityBlock {
             // On a wall canonical +z points down; mirror the swing so "off" points up.
             handle = Polygons.ofRotatedBox(stick, 'x', on ? 40 : -40, pivot, HANDLE);
         }
-        return attach(state, handle);
+        // The stick is u 7..9, v 6..16 of the lever texture; its ends are the 2x2 at the top (1.7.10).
+        List<Polygon> textured = new java.util.ArrayList<>(handle.size());
+        for (Polygon face : handle) {
+            boolean end = face.direction == com.carpentersblocks.core.Side.UP || face.direction == com.carpentersblocks.core.Side.DOWN;
+            textured.add(Polygons.fitUvs(face, 7, 6, 9, end ? 8 : 16));
+        }
+        return attach(state, textured);
     }
 
     @Override

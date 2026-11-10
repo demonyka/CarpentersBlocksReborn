@@ -44,6 +44,17 @@ public final class CarpentersBlocksForgeClient {
             }
         });
 
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.DrawHighlightEvent.HighlightBlock event) -> {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            net.minecraft.core.BlockPos pos = event.getTarget().getBlockPos();
+            net.minecraft.world.phys.Vec3 camera = event.getInfo().getPosition();
+            if (mc.level != null && com.carpentersblocks.client.render.ModelOutline.render(event.getMatrix(),
+                event.getBuffers().getBuffer(RenderType.lines()), mc.level, pos, mc.level.getBlockState(pos),
+                camera.x, camera.y, camera.z)) {
+                event.setCanceled(true);
+            }
+        });
+
         if (com.carpentersblocks.util.DevTests.client()) {
             MinecraftForge.EVENT_BUS.addListener((TickEvent.ClientTickEvent event) -> {
                 if (event.phase == TickEvent.Phase.END) {

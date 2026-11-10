@@ -33,8 +33,8 @@ import java.util.List;
  * Lives for one {@code getModelData} / {@code getQuads} round on a chunk-building thread.
  */
 final class ForgeRenderContext implements CoverModelBuilder.CoverSource {
-    /** Layer of the frame and of fixed parts (their textures have cut-out pixels). */
-    private static final RenderType OWN_LAYER = RenderType.cutoutMipped();
+    /** Layer of the frame (its texture has cut-out holes) and of small fixed parts (no mipmaps). */
+    private static final RenderType FRAME_LAYER = RenderType.cutoutMipped(), DETAIL_LAYER = RenderType.cutout();
 
     final BlockState state;
     private final BlockAndTintGetter level;
@@ -62,7 +62,7 @@ final class ForgeRenderContext implements CoverModelBuilder.CoverSource {
             int hidden = level == null ? 0 : FaceCulling.hiddenSides(level, pos, state, data);
             quads = CoverModelBuilder.collect(state, data, base, this, hidden,
                 cover -> layer == null || ItemBlockRenderTypes.canRenderInLayer(cover, layer),
-                layer == null || layer == OWN_LAYER);
+                layer == null || layer == FRAME_LAYER, layer == null || layer == DETAIL_LAYER);
             quadsLayer = layer;
         }
         return quads[side == null ? 6 : side.ordinal()];

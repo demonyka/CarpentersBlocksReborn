@@ -67,6 +67,11 @@ final class ClientScenario {
         ClientTestHarness.waitUntil("join world",
             () -> mc.player != null && mc.level != null && mc.getSingleplayerServer() != null && mc.screen == null, 2400, 40);
 
+        if (ClientTestHarness.mode().equals("look")) {
+            LookScenario.build();
+            return;
+        }
+
         // The world spawn can be far from (0, 0): go there first and let the chunks load,
         // otherwise /fill refuses to touch unloaded chunks and there is no platform.
         ClientTestHarness.step("fly to test area", () -> onServer(server -> {

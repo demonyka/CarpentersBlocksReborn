@@ -78,15 +78,19 @@ public class DoorBlock extends BoxedBlock {
     // ---- geometry -------------------------------------------------------------------------
 
     /**
-     * Model frame: facing north, closed slab on the south edge (z 13..16 px). An open door is
-     * the same slab turned a quarter around its hinge.
+     * Model frame: facing north, closed slab on the south edge (z 13..16 px), hinge at the
+     * west end (left) or east end (right). An open door is the same slab turned a quarter
+     * around the hinge post, so the handle swings to the far end and the faces keep their
+     * sides. (Turning around the block centre lands the slab on the right edge but back to
+     * front: the handle would sit at the hinge.)
      */
-    private static int turns(BlockState state) {
-        int facing = com.carpentersblocks.core.geom.Orientation.turnsFromNorth(Sides.toCore(state.getValue(FACING)));
-        if (!state.getValue(OPEN)) {
-            return facing;
+    private static Box place(BlockState state, Box box) {
+        if (state.getValue(OPEN)) {
+            box = state.getValue(HINGE) == DoorHingeSide.LEFT
+                ? box.rotateY(3).move(-13 / 16.0, 0, 0)
+                : box.rotateY(1).move(13 / 16.0, 0, 0);
         }
-        return facing + (state.getValue(HINGE) == DoorHingeSide.RIGHT ? 3 : 1);
+        return box.rotateY(com.carpentersblocks.core.geom.Orientation.turnsFromNorth(Sides.toCore(state.getValue(FACING))));
     }
 
     @Override
@@ -113,7 +117,7 @@ public class DoorBlock extends BoxedBlock {
         }
         List<Part> placed = new ArrayList<>(parts.size());
         for (Part part : parts) {
-            placed.add(new Part(part.box.rotateY(turns(state)), part.part));
+            placed.add(new Part(place(state, part.box), part.part));
         }
         return placed;
     }
@@ -173,7 +177,7 @@ public class DoorBlock extends BoxedBlock {
 
     @Override
     protected List<Box> outlineBoxes(BlockState state) {
-        return Collections.singletonList(Box.px(0, 0, 13, 16, 16, 16).rotateY(turns(state)));
+        return Collections.singletonList(place(state, Box.px(0, 0, 13, 16, 16, 16)));
     }
 
     @Override

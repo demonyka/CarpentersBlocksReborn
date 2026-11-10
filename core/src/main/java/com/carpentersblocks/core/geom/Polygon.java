@@ -41,6 +41,11 @@ public final class Polygon {
         this.uvs = uvs;
     }
 
+    /** The same face with other texture coordinates (pixels: u0, v0, u1, v1, ...). */
+    public Polygon withUvs(float[] newUvs) {
+        return new Polygon(vertices, normal, direction, cullFace, coverSide, newUvs, part);
+    }
+
     /** Area of the face (block face = 1). */
     public double area() {
         Vec3d a = vertices[0], b = vertices[1], c = vertices[2], d = vertices[3];

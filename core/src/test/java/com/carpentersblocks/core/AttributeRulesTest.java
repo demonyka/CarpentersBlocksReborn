@@ -26,20 +26,24 @@ class AttributeRulesTest {
     }
 
     @Test
-    void firstCoverGoesToHostThenToClickedSide() {
+    void firstCoverGoesToHostThenSneakingToClickedSide() {
         AttributeView empty = view();
         assertEquals(key(AttributeType.COVER, AttributeLocation.HOST),
             AttributeRules.addTarget(HeldItemKind.COVER, false, Side.NORTH, empty, l -> true));
+        // Sneaking on a bare block is left to vanilla (place the held block next to it).
+        assertNull(AttributeRules.addTarget(HeldItemKind.COVER, true, Side.NORTH, empty, l -> true));
 
         AttributeView hosted = view(key(AttributeType.COVER, AttributeLocation.HOST));
+        // A plain click on a covered block must not swallow the block as a side cover.
+        assertNull(AttributeRules.addTarget(HeldItemKind.COVER, false, Side.NORTH, hosted, l -> true));
         assertEquals(key(AttributeType.COVER, AttributeLocation.NORTH),
-            AttributeRules.addTarget(HeldItemKind.COVER, false, Side.NORTH, hosted, l -> true));
+            AttributeRules.addTarget(HeldItemKind.COVER, true, Side.NORTH, hosted, l -> true));
     }
 
     @Test
     void coverRespectsBlockRestrictions() {
         AttributeView hosted = view(key(AttributeType.COVER, AttributeLocation.HOST));
-        assertNull(AttributeRules.addTarget(HeldItemKind.COVER, false, Side.UP, hosted, AttributeLocation::isHost));
+        assertNull(AttributeRules.addTarget(HeldItemKind.COVER, true, Side.UP, hosted, AttributeLocation::isHost));
     }
 
     @Test

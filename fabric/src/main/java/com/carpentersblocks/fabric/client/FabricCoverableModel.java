@@ -62,15 +62,15 @@ public final class FabricCoverableModel implements BakedModel, FabricBakedModel 
         }
         QuadEmitter emitter = context.getEmitter();
         int hidden = FaceCulling.hiddenSides(view, pos, state, data);
-        CoverModelBuilder.build(state, data, base, CoverModelBuilder.PLAIN, hidden, (quad, cull, cover) -> {
-            emitter.fromVanilla(quad, byLayer[layerIndex(cover)], cull);
+        CoverModelBuilder.build(state, data, base, CoverModelBuilder.PLAIN, hidden, (quad, cull, cover, detail) -> {
+            emitter.fromVanilla(quad, byLayer[detail ? 1 : layerIndex(cover)], cull);
             emitter.emit();
         });
     }
 
     private static int layerIndex(BlockState cover) {
         if (cover == null) {
-            return 2; // the frame and fixed parts have cut-out pixels
+            return 2; // the frame has cut-out holes
         }
         RenderType layer = ItemBlockRenderTypes.getChunkRenderType(cover);
         return layer == RenderType.translucent() ? 0 : layer == RenderType.cutout() ? 1 : layer == RenderType.cutoutMipped() ? 2 : 3;

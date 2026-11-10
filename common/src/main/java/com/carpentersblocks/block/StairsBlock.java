@@ -129,4 +129,10 @@ public class StairsBlock extends BoxedBlock {
         }
         return state.setValue(SHAPE, shape);
     }
+
+    /** 1.7.10: stairs show the quartered frame, like the Carpenter's Block. */
+    @Override
+    public net.minecraft.resources.ResourceLocation uncoveredTexture(BlockState state, com.carpentersblocks.core.geom.Polygon polygon) {
+        return com.carpentersblocks.util.UncoveredTextures.QUARTERED_FRAME;
+    }
 }

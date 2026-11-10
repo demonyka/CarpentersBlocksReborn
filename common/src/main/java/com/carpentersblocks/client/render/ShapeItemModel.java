@@ -31,7 +31,9 @@ public final class ShapeItemModel implements BakedModel {
     @Override
     public List<BakedQuad> getQuads(BlockState state, Direction side, Random rand) {
         if (quads == null) {
-            quads = CoverModelBuilder.collect(this.state, RenderData.EMPTY, base, CoverModelBuilder.PLAIN, 0, cover -> true, true);
+            quads = CoverModelBuilder.collect(this.state,
+                ((com.carpentersblocks.block.CoverableBlock) this.state.getBlock()).getItemPolygons(this.state),
+                RenderData.EMPTY, base, CoverModelBuilder.PLAIN, 0, cover -> true, true, true);
         }
         return quads[side == null ? 6 : side.ordinal()];
     }

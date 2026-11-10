@@ -126,4 +126,10 @@ public class PressurePlateBlock extends PolarityBlock {
         click.message("message.carpentersblocks.trigger_" + next.getSerializedName());
         return true;
     }
+
+    /** 1.7.10: the plate shows the full frame. */
+    @Override
+    public net.minecraft.resources.ResourceLocation uncoveredTexture(BlockState state, com.carpentersblocks.core.geom.Polygon polygon) {
+        return com.carpentersblocks.util.UncoveredTextures.FULL_FRAME;
+    }
 }

@@ -38,14 +38,17 @@ public final class AttributeRules {
         AttributeLocation location = effectiveLocation(view, clicked);
         switch (kind) {
             case COVER: {
-                // The host is tried first; once it is covered (or cannot be), the clicked side gets a side cover.
-                if (location.isHost() && (!canCover.test(location) || view.has(AttributeType.COVER, location))) {
-                    location = AttributeLocation.of(clicked);
+                // A plain click covers a bare block. Once it is covered, a plain click does
+                // nothing here (the held block is placed next to it as usual) and a side
+                // cover takes a sneak-click, so it cannot happen by accident.
+                AttributeLocation host = AttributeLocation.HOST;
+                if (!sneaking) {
+                    return canCover.test(host) && !view.has(AttributeType.COVER, host)
+                        ? AttributeKey.of(AttributeType.COVER, host) : null;
                 }
-                if (canCover.test(location) && !view.has(AttributeType.COVER, location)) {
-                    return AttributeKey.of(AttributeType.COVER, location);
-                }
-                return null;
+                AttributeLocation side = AttributeLocation.of(clicked);
+                return view.has(AttributeType.COVER, host) && canCover.test(side) && !view.has(AttributeType.COVER, side)
+                    ? AttributeKey.of(AttributeType.COVER, side) : null;
             }
             case ILLUMINATOR:
                 return sneaking && !view.has(AttributeType.ILLUMINATOR, AttributeLocation.HOST)

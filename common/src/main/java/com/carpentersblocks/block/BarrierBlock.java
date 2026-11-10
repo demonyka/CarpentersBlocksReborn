@@ -38,7 +38,8 @@ public class BarrierBlock extends BoxedBlock {
 
     public BarrierBlock(Properties properties) {
         super(properties.noOcclusion());
-        registerDefaultState(stateDefinition.any().setValue(TYPE, FenceType.VANILLA).setValue(POST, false)
+        // Posts by default, like a vanilla fence; the hammer removes the post of a straight run.
+        registerDefaultState(stateDefinition.any().setValue(TYPE, FenceType.VANILLA).setValue(POST, true)
             .setValue(NORTH, false).setValue(EAST, false).setValue(SOUTH, false).setValue(WEST, false)
             .setValue(UP, false).setValue(DOWN, false).setValue(LIGHT, 0));
     }
@@ -218,5 +219,17 @@ public class BarrierBlock extends BoxedBlock {
     public boolean isPathfindable(BlockState state, net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos,
                                   net.minecraft.world.level.pathfinder.PathComputationType type) {
         return false;
+    }
+
+    /** Like the vanilla fence item: a short run between two posts (a lone post reads badly as an icon). */
+    @Override
+    public List<com.carpentersblocks.core.geom.Polygon> getItemPolygons(BlockState displayState) {
+        List<com.carpentersblocks.core.geom.Polygon> out = new ArrayList<>();
+        for (Box box : new Box[] {
+            Box.px(6, 0, 0, 10, 16, 4), Box.px(6, 0, 12, 10, 16, 16), Box.px(7, 12, 4, 9, 15, 12), Box.px(7, 6, 4, 9, 9, 12),
+        }) {
+            out.addAll(com.carpentersblocks.core.geom.Polygons.ofBox(box));
+        }
+        return out;
     }
 }

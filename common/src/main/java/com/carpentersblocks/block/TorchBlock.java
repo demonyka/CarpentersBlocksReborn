@@ -129,21 +129,28 @@ public class TorchBlock extends AttachedBlock {
         }
         List<Polygon> torch = new ArrayList<>();
         torch.addAll(Polygons.ofBox(Box.px(7, 0, 7, 9, 8, 9), 0));   // handle takes the cover
-        torch.addAll(Polygons.ofBox(Box.px(7, 8, 7, 9, 10, 9), HEAD));
+        for (Polygon face : Polygons.ofBox(Box.px(7, 8, 7, 9, 10, 9), HEAD)) {
+            torch.add(Polygons.fitUvs(face, 7, 6, 9, 8)); // the head is the 2x2 at u 7..9, v 6..8 (1.7.10)
+        }
         if (!onWall(state)) {
             return torch;
         }
-        // Wall torch: stands 3 pixels up near the wall and leans 22 degrees away from it,
-        // designed against the north wall then turned to the real one.
+        // Wall torch, like the vanilla one: its foot is centred on the wall face 3.5 pixels up
+        // and it leans 22.5 degrees away. Designed against the north wall, then turned.
         int turns = Orientation.turnsFromNorth(Sides.toCore(state.getValue(FACING))) + 2;
         Vec3d base = new Vec3d(0.5, 0, 0.5);
         return Orientation.polygons(torch, p -> {
             Vec3d q = p.sub(base);
-            double rad = Math.toRadians(22), cos = Math.cos(rad), sin = Math.sin(rad);
+            double rad = Math.toRadians(22.5), cos = Math.cos(rad), sin = Math.sin(rad);
             Vec3d tilted = new Vec3d(q.x, q.y * cos - q.z * sin, q.y * sin + q.z * cos);
-            Vec3d moved = tilted.add(new Vec3d(0.5, 3.5 / 16, 1.5 / 16));
+            Vec3d moved = tilted.add(new Vec3d(0.5, 3.5 / 16, 0));
             return Orientation.rotateY(moved, turns);
         });
+    }
+
+    @Override
+    protected float[] fixedUv(BlockState state, Polygon polygon) {
+        return polygon.part == LANTERN_FLAME ? new float[] { 7, 6, 9, 8 } : null;
     }
 
     @Override
@@ -233,7 +240,7 @@ public class TorchBlock extends AttachedBlock {
             head = new Vec3d(0.5, 0.5625, 0.5);
         } else if (onWall(state)) {
             Side away = Sides.toCore(state.getValue(FACING));
-            head = new Vec3d(0.5 + away.dx * 0.27, 0.92, 0.5 + away.dz * 0.27);
+            head = new Vec3d(0.5 - away.dx * 0.27, 0.92, 0.5 - away.dz * 0.27);
         } else {
             head = new Vec3d(0.5, 0.7, 0.5);
         }

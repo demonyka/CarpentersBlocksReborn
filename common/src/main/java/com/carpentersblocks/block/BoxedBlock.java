@@ -50,6 +50,26 @@ public abstract class BoxedBlock extends CoverableBlock {
         super(properties, ownLight);
     }
 
+    /** Uncovered boxed blocks are plain wood (1.7.10 icon_uncovered_solid); the frame's holes do not suit thin parts. */
+    @Override
+    public net.minecraft.resources.ResourceLocation uncoveredTexture(BlockState state, Polygon polygon) {
+        return com.carpentersblocks.util.UncoveredTextures.SOLID;
+    }
+
+    /** Thin and small blocks take one cover for the whole block; stairs override this. */
+    @Override
+    public boolean canCover(BlockState state, com.carpentersblocks.core.attribute.AttributeLocation location) {
+        return location.isHost();
+    }
+
+    /**
+     * Region of a fixed texture a part shows, as {u0, v0, u1, v1} in pixels, or null for the
+     * world-aligned default. For parts drawn from a small region of a texture.
+     */
+    protected float[] fixedUv(BlockState state, Polygon polygon) {
+        return null;
+    }
+
     /** Faces that are not axis-aligned boxes (tilted lever handle, wall torch). */
     protected List<Polygon> extraPolygons(BlockState state) {
         return Collections.emptyList();
@@ -80,6 +100,12 @@ public abstract class BoxedBlock extends CoverableBlock {
                 out.addAll(Polygons.ofBox(part.box, part.part));
             }
             out.addAll(extraPolygons(s));
+            for (int i = 0; i < out.size(); i++) {
+                float[] uv = fixedUv(s, out.get(i));
+                if (uv != null) {
+                    out.set(i, Polygons.fitUvs(out.get(i), uv[0], uv[1], uv[2], uv[3]));
+                }
+            }
             return Collections.unmodifiableList(out);
         });
     }

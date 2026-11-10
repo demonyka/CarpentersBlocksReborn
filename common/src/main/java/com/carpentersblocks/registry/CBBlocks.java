@@ -48,7 +48,7 @@ public final class CBBlocks {
         () -> new HatchBlock(wood()), b -> new BlockItem(b, itemProps()),
         b -> b.defaultBlockState().setValue(HatchBlock.OPEN, true));
     public static final Supplier<DoorBlock> DOOR = block("door",
-        () -> new DoorBlock(wood()), b -> new BlockItem(b, itemProps()), DEFAULT::apply);
+        () -> new DoorBlock(wood()), b -> new BlockItem(b, itemProps()), null); // flat icon, like vanilla doors
     public static final Supplier<GarageDoorBlock> GARAGE_DOOR = block("garage_door",
         () -> new GarageDoorBlock(wood()), b -> new BlockItem(b, itemProps()), DEFAULT::apply);
     public static final Supplier<ButtonBlock> BUTTON = block("button",

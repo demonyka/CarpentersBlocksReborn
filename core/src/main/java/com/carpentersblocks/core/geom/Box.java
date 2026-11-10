@@ -37,6 +37,11 @@ public final class Box {
         return b;
     }
 
+    /** The box moved by an offset (may leave the unit block, e.g. an open door's handle). */
+    public Box move(double dx, double dy, double dz) {
+        return new Box(minX + dx, minY + dy, minZ + dz, maxX + dx, maxY + dy, maxZ + dz);
+    }
+
     /** Mirror top to bottom. */
     public Box flipY() {
         return new Box(minX, 1 - maxY, minZ, maxX, 1 - minY, maxZ);

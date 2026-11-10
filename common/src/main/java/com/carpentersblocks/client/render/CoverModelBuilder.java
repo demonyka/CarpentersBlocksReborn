@@ -51,8 +51,11 @@ public final class CoverModelBuilder {
         /**
          * @param cullFace side on which a neighbour hides the quad, or null
          * @param cover    the cover block the quad shows, or null for the frame and fixed parts
+         * @param detail   a fixed part drawn from a few pixels of its texture (lever stick,
+         *                 torch head, glass panes): it must not be drawn with mipmaps, which
+         *                 blend those pixels with the transparent ones around them
          */
-        void accept(BakedQuad quad, Direction cullFace, BlockState cover);
+        void accept(BakedQuad quad, Direction cullFace, BlockState cover, boolean detail);
     }
 
     /** The cover's plain model quads, with no knowledge of the world around the block. */
@@ -71,13 +74,19 @@ public final class CoverModelBuilder {
      *                    (see {@link FaceCulling}); only used for blocks that are not opaque
      */
     public static void build(BlockState state, RenderData data, BakedModel base, CoverSource source, int hiddenSides, Sink sink) {
-        CoverableBlock block = (CoverableBlock) state.getBlock();
         RenderData snapshot = data == null ? RenderData.EMPTY : data;
+        build(state, ((CoverableBlock) state.getBlock()).getRenderPolygons(state, snapshot), snapshot, base, source, hiddenSides, sink);
+    }
+
+    /** Emits the quads of explicit geometry (the block's own, or its inventory shape). */
+    public static void build(BlockState state, List<Polygon> polygons, RenderData snapshot, BakedModel base, CoverSource source,
+                             int hiddenSides, Sink sink) {
+        CoverableBlock block = (CoverableBlock) state.getBlock();
         // An opaque block has a real occlusion shape, so vanilla culls its faces correctly.
         // Otherwise the shape is empty and vanilla would hide our faces next to any solid
         // neighbour, even a slab: those faces are emitted unculled and hidden by FaceCulling.
         boolean opaque = FaceCulling.isOpaque(state);
-        for (Polygon polygon : block.getRenderPolygons(state, snapshot)) {
+        for (Polygon polygon : polygons) {
             Direction cull = polygon.cullFace == null ? null : Sides.toMc(polygon.cullFace);
             if (!opaque && cull != null) {
                 if ((hiddenSides & 1 << cull.ordinal()) != 0) {
@@ -88,7 +97,7 @@ public final class CoverModelBuilder {
             ResourceLocation fixedTexture = block.fixedTexture(state, polygon);
             if (fixedTexture != null) {
                 // Parts that never take a cover: torch flame, lever handle, glass panes...
-                sink.accept(bake(polygon, sprite(fixedTexture), TintIndex.NONE), cull, null);
+                sink.accept(bake(polygon, sprite(fixedTexture), TintIndex.NONE), cull, null, true);
                 continue;
             }
             AttributeLocation location = polygon.coverSide == null
@@ -98,7 +107,7 @@ public final class CoverModelBuilder {
             if (cover == null) {
                 ResourceLocation texture = block.uncoveredTexture(state, polygon);
                 TextureAtlasSprite sprite = texture == null ? base.getParticleIcon() : sprite(texture);
-                sink.accept(bake(polygon, sprite, dyed ? TintIndex.of(location, -1) : TintIndex.NONE), cull, null);
+                sink.accept(bake(polygon, sprite, dyed ? TintIndex.of(location, -1) : TintIndex.NONE), cull, null, false);
                 continue;
             }
             Direction dir = Sides.toMc(polygon.direction);
@@ -110,7 +119,7 @@ public final class CoverModelBuilder {
             }
             if (coverQuads.isEmpty()) {
                 TextureAtlasSprite particle = Minecraft.getInstance().getBlockRenderer().getBlockModel(cover).getParticleIcon();
-                sink.accept(bake(polygon, particle, dyed ? TintIndex.of(location, -1) : TintIndex.NONE), cull, cover);
+                sink.accept(bake(polygon, particle, dyed ? TintIndex.of(location, -1) : TintIndex.NONE), cull, cover, false);
                 continue;
             }
             for (BakedQuad coverQuad : coverQuads) {
@@ -123,14 +132,26 @@ public final class CoverModelBuilder {
 
     /** All quads split by cull side: index = {@link Direction} ordinal, 6 = never culled. */
     public static List<BakedQuad>[] collect(BlockState state, RenderData data, BakedModel base, CoverSource source, int hiddenSides,
-                                            java.util.function.Predicate<BlockState> coverFilter, boolean ownParts) {
+                                            java.util.function.Predicate<BlockState> coverFilter, boolean frame, boolean details) {
+        RenderData snapshot = data == null ? RenderData.EMPTY : data;
+        return collect(state, ((CoverableBlock) state.getBlock()).getRenderPolygons(state, snapshot), snapshot, base, source,
+            hiddenSides, coverFilter, frame, details);
+    }
+
+    /**
+     * @param frame   include uncovered faces (the frame texture)
+     * @param details include fixed parts (see {@link Sink#accept})
+     */
+    public static List<BakedQuad>[] collect(BlockState state, List<Polygon> polygons, RenderData snapshot, BakedModel base,
+                                            CoverSource source, int hiddenSides,
+                                            java.util.function.Predicate<BlockState> coverFilter, boolean frame, boolean details) {
         @SuppressWarnings("unchecked")
         List<BakedQuad>[] lists = new List[7];
         for (int i = 0; i < lists.length; i++) {
             lists[i] = new ArrayList<>();
         }
-        build(state, data, base, source, hiddenSides, (quad, cull, cover) -> {
-            if (cover == null ? ownParts : coverFilter.test(cover)) {
+        build(state, polygons, snapshot, base, source, hiddenSides, (quad, cull, cover, detail) -> {
+            if (cover != null ? coverFilter.test(cover) : detail ? details : frame) {
                 lists[cull == null ? 6 : cull.ordinal()].add(quad);
             }
         });
@@ -142,7 +163,7 @@ public final class CoverModelBuilder {
         if (state == null || !(state.getBlock() instanceof CoverableBlock)) {
             return base.getQuads(state, cullSide, rand);
         }
-        return collect(state, data, base, PLAIN, 0, cover -> true, true)[cullSide == null ? 6 : cullSide.ordinal()];
+        return collect(state, data, base, PLAIN, 0, cover -> true, true, true)[cullSide == null ? 6 : cullSide.ordinal()];
     }
 
     // ---- cover quads ----------------------------------------------------------------------
@@ -209,7 +230,7 @@ public final class CoverModelBuilder {
         }
         TextureAtlasSprite sprite = coverQuad.sprite;
         if (map == null) {
-            sink.accept(bake(polygon, sprite, tint), cull, cover); // degenerate cover quad: whole sprite
+            sink.accept(bake(polygon, sprite, tint), cull, cover, false); // degenerate cover quad: whole sprite
             return;
         }
         boolean wholeSide = minS <= EPS && minT <= EPS && maxS >= FULL - EPS && maxT >= FULL - EPS;
@@ -223,7 +244,7 @@ public final class CoverModelBuilder {
                 atlas[i * 2] = au[0] + map[0] * ds + map[1] * dt;
                 atlas[i * 2 + 1] = av[0] + map[2] * ds + map[3] * dt;
             }
-            sink.accept(bake(piece, atlas, sprite, tint), cull, cover);
+            sink.accept(bake(piece, atlas, sprite, tint), cull, cover, false);
         }
     }
 

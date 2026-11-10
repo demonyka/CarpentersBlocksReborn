@@ -31,5 +31,6 @@
   "message.carpentersblocks.sensitivity_monsters": "Sensitivity: switches at the monster spawn light level (including storms)",
   "message.carpentersblocks.sensitivity_dynamic": "Sensitivity: output follows the position of the sun",
   "message.carpentersblocks.activation_wood": "Activation: opens by hand, like a wooden door",
-  "message.carpentersblocks.activation_iron": "Activation: redstone only, like an iron door"
+  "message.carpentersblocks.activation_iron": "Activation: redstone only, like an iron door",
+  "tooltip.carpentersblocks.cover": "Cover: %s"
 }

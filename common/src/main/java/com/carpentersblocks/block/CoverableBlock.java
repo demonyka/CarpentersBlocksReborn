@@ -107,6 +107,11 @@ public abstract class CoverableBlock extends Block implements EntityBlock {
         return getRenderPolygons(state);
     }
 
+    /** Faces of the item in inventories, for a display state; defaults to the block's own shape. */
+    public List<Polygon> getItemPolygons(BlockState displayState) {
+        return getRenderPolygons(displayState);
+    }
+
     /**
      * Plain right-click with an empty hand or an item that is not a tool, cover, dye or
      * illuminator: open a door, press a button... Called on both sides. Return PASS to let
@@ -133,6 +138,14 @@ public abstract class CoverableBlock extends Block implements EntityBlock {
      */
     public ResourceLocation fixedTexture(BlockState state, Polygon polygon) {
         return null;
+    }
+
+    /**
+     * Whether the selection outline should follow the drawn faces instead of the click shape
+     * (blocks whose shape is only a boxy approximation of the model: slopes).
+     */
+    public boolean hasModelOutline(BlockState state) {
+        return false;
     }
 
     /** Whether a cover may be placed at this location. */

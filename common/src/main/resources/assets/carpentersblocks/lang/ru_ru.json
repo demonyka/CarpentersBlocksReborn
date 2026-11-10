@@ -31,5 +31,6 @@
   "message.carpentersblocks.sensitivity_monsters": "Чувствительность: порог появления монстров (и грозы)",
   "message.carpentersblocks.sensitivity_dynamic": "Чувствительность: сигнал следует за солнцем",
   "message.carpentersblocks.activation_wood": "Открывание: рукой, как деревянная дверь",
-  "message.carpentersblocks.activation_iron": "Открывание: только редстоуном, как железная дверь"
+  "message.carpentersblocks.activation_iron": "Открывание: только редстоуном, как железная дверь",
+  "tooltip.carpentersblocks.cover": "Покрытие: %s"
 }

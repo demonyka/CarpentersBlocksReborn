@@ -92,7 +92,13 @@ repositories {
         url "https://maven.tterrag.com/"
         content { includeGroup "team.chisel.ctm" }
     }
+    // Jade (the HWYLA tooltip API), only needed to compile.
+    maven {
+        url "https://cursemaven.com"
+        content { includeGroup "curse.maven" }
+    }
 }
 dependencies {
     modCompileOnly("team.chisel.ctm:CTM:MC1.16.1-1.1.2.6") { transitive = false }
+    modCompileOnly("curse.maven:jade-324717:3910873") { transitive = false }
 }

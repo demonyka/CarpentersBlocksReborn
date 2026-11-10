@@ -216,4 +216,9 @@ public class SlopeBlock extends CoverableBlock {
         }
         return state.setValue(TYPE, SlopeTypeProperty.of(type));
     }
+
+    @Override
+    public boolean hasModelOutline(BlockState state) {
+        return true;
+    }
 }
