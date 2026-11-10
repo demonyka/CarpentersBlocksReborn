@@ -4,7 +4,7 @@
   "version": "${version}",
   "name": "Carpenter's Blocks",
   "description": "Slopes and vanilla-inspired blocks that take covers, side covers, dyes and illumination.",
-  "authors": ["disaev"],
+  "authors": ["demonyga"],
   "contributors": ["Mineshopper and contributors (the original Carpenter's Blocks: design and textures)"],
   "contact": {
     "sources": "https://github.com/demonyka/CarpentersBlocksReborn",
