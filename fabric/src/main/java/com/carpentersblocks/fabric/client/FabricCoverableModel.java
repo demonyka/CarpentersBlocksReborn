@@ -1,11 +1,20 @@
 package com.carpentersblocks.fabric.client;
 
+import com.carpentersblocks.block.CoverableBlock;
 import com.carpentersblocks.blockentity.RenderData;
 import com.carpentersblocks.client.render.BoundCoverModel;
 import com.carpentersblocks.client.render.CoverModelBuilder;
+import com.carpentersblocks.client.render.FaceCulling;
+import net.fabricmc.fabric.api.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
+import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
+import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachedBlockView;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -23,11 +32,13 @@ import java.util.function.Supplier;
 
 /**
  * Wraps the JSON model of a coverable block. Reads the block entity render attachment and
- * hands a vanilla-style model to the renderer (Indigo, or Indium with Sodium), so lighting
- * and ambient occlusion are the vanilla ones.
+ * emits its quads through the Fabric Rendering API (Indigo, or Indium with Sodium), each in
+ * the render layer of its cover, so stained glass and ice covers are translucent.
  */
 public final class FabricCoverableModel implements BakedModel, FabricBakedModel {
     private final BakedModel base;
+    /** Materials by layer: translucent, cutout, cut-out mipped, solid. Looked up on first use. */
+    private static volatile RenderMaterial[] materials;
 
     public FabricCoverableModel(BakedModel base) {
         this.base = base;
@@ -40,10 +51,46 @@ public final class FabricCoverableModel implements BakedModel, FabricBakedModel 
 
     @Override
     public void emitBlockQuads(BlockAndTintGetter view, BlockState state, BlockPos pos, Supplier<Random> random, RenderContext context) {
-        Object attachment = ((RenderAttachedBlockView) view).getBlockEntityRenderAttachment(pos);
+        Object attachment = view instanceof RenderAttachedBlockView
+            ? ((RenderAttachedBlockView) view).getBlockEntityRenderAttachment(pos) : null;
         // Geometry always comes from the block (slopes have no JSON geometry); covers are optional.
         RenderData data = attachment instanceof RenderData ? (RenderData) attachment : RenderData.EMPTY;
-        context.fallbackConsumer().accept(new BoundCoverModel(base, data));
+        RenderMaterial[] byLayer = materials();
+        if (byLayer == null || !(state.getBlock() instanceof CoverableBlock)) {
+            context.fallbackConsumer().accept(new BoundCoverModel(base, data));
+            return;
+        }
+        QuadEmitter emitter = context.getEmitter();
+        int hidden = FaceCulling.hiddenSides(view, pos, state, data);
+        CoverModelBuilder.build(state, data, base, CoverModelBuilder.PLAIN, hidden, (quad, cull, cover) -> {
+            emitter.fromVanilla(quad, byLayer[layerIndex(cover)], cull);
+            emitter.emit();
+        });
+    }
+
+    private static int layerIndex(BlockState cover) {
+        if (cover == null) {
+            return 2; // the frame and fixed parts have cut-out pixels
+        }
+        RenderType layer = ItemBlockRenderTypes.getChunkRenderType(cover);
+        return layer == RenderType.translucent() ? 0 : layer == RenderType.cutout() ? 1 : layer == RenderType.cutoutMipped() ? 2 : 3;
+    }
+
+    private static RenderMaterial[] materials() {
+        RenderMaterial[] found = materials;
+        if (found == null) {
+            Renderer renderer = RendererAccess.INSTANCE.getRenderer();
+            if (renderer == null) {
+                return null;
+            }
+            BlendMode[] modes = { BlendMode.TRANSLUCENT, BlendMode.CUTOUT, BlendMode.CUTOUT_MIPPED, BlendMode.SOLID };
+            found = new RenderMaterial[modes.length];
+            for (int i = 0; i < modes.length; i++) {
+                found[i] = renderer.materialFinder().blendMode(0, modes[i]).find();
+            }
+            materials = found;
+        }
+        return found;
     }
 
     @Override

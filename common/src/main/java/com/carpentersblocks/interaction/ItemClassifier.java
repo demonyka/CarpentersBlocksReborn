@@ -24,8 +24,6 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class ItemClassifier {
     /** Items that light the block up when sneak-right-clicked (glowstone dust). */
     public static final ResourceLocation ILLUMINATORS = CarpentersBlocks.id("illuminators");
-    /** Items that add an overlay (grass, snow, hay, ...). */
-    public static final ResourceLocation OVERLAYS = CarpentersBlocks.id("overlays");
     /** Block items accepted as covers even if they are not full cubes (slabs, glass, ...). */
     public static final ResourceLocation COVER_WHITELIST = CarpentersBlocks.id("cover_whitelist");
     /** Block items never accepted as covers. */
@@ -44,9 +42,6 @@ public final class ItemClassifier {
         }
         if (inTag(ILLUMINATORS, item)) {
             return HeldItemKind.ILLUMINATOR;
-        }
-        if (inTag(OVERLAYS, item)) {
-            return HeldItemKind.OVERLAY;
         }
         if (item instanceof DyeItem) {
             return HeldItemKind.DYE;
@@ -70,8 +65,12 @@ public final class ItemClassifier {
             return true;
         }
         BlockState state = block.defaultBlockState();
-        return state.getRenderShape() == RenderShape.MODEL
-            && Block.isShapeFullBlock(state.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO));
+        try {
+            return state.getRenderShape() == RenderShape.MODEL
+                && Block.isShapeFullBlock(state.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO));
+        } catch (RuntimeException e) {
+            return false; // a modded block that needs its own world position to tell its shape
+        }
     }
 
     private static boolean inTag(ResourceLocation tag, Item item) {

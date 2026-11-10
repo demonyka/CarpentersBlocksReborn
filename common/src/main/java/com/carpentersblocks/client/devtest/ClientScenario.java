@@ -201,6 +201,7 @@ final class ClientScenario {
 
         SlopeScenario.build();
         BlocksScenario.build();
+        ConnectedScenario.build();
     }
 
     // ---- helpers ---------------------------------------------------------------------

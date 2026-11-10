@@ -39,7 +39,8 @@ public class CollapsibleBlock extends CoverableBlock {
     private static final Map<Integer, VoxelShape> SHAPES = new ConcurrentHashMap<>();
 
     public CollapsibleBlock(Properties properties) {
-        super(properties.noOcclusion());
+        // dynamicShape: the shape comes from the block entity, so vanilla must not cache "full cube".
+        super(properties.noOcclusion().dynamicShape());
         registerDefaultState(stateDefinition.any().setValue(HANGING, false).setValue(LIGHT, 0));
     }
 
@@ -50,7 +51,7 @@ public class CollapsibleBlock extends CoverableBlock {
     }
 
     private static int packed(int shapeData) {
-        return (shapeData & SET) != 0 ? shapeData & (SET - 1) : CollapsibleShape.FULL;
+        return (shapeData & SET) != 0 ? CollapsibleShape.normalize(shapeData & (SET - 1)) : CollapsibleShape.FULL;
     }
 
     private static int packed(BlockGetter level, BlockPos pos) {
@@ -73,6 +74,9 @@ public class CollapsibleBlock extends CoverableBlock {
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         boolean hanging = state.getValue(HANGING);
         int packed = packed(level, pos);
+        if (SHAPES.size() > CollapsibleShape.CACHE_LIMIT) {
+            SHAPES.clear();
+        }
         return SHAPES.computeIfAbsent(packed << 1 | (hanging ? 1 : 0),
             k -> BoxedBlock.union(CollapsibleShape.collisionBoxes(packed, hanging)));
     }
@@ -203,5 +207,13 @@ public class CollapsibleBlock extends CoverableBlock {
     @Override
     public boolean canCover(BlockState state, AttributeLocation location) {
         return location.isHost();
+    }
+
+    /** Mobs path over it like a slab or stairs, not through it. */
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean isPathfindable(BlockState state, net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos,
+                                  net.minecraft.world.level.pathfinder.PathComputationType type) {
+        return false;
     }
 }

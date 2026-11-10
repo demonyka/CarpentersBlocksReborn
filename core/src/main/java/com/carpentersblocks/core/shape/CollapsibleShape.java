@@ -27,7 +27,22 @@ public final class CollapsibleShape {
     private static final Map<Integer, List<Polygon>> POLYGONS = new ConcurrentHashMap<>();
     private static final Map<Integer, List<Box>> BOXES = new ConcurrentHashMap<>();
 
+    /** Shapes are cached per corner combination; the caches are emptied beyond this many entries. */
+    public static final int CACHE_LIMIT = 4096;
+
     private CollapsibleShape() {
+    }
+
+    /** The same shape with every corner in 0..16 (stored data may hold larger raw values). */
+    public static int normalize(int packed) {
+        return pack(corner(packed, NN), corner(packed, PN), corner(packed, NP), corner(packed, PP));
+    }
+
+    private static <T> Map<Integer, T> bounded(Map<Integer, T> cache) {
+        if (cache.size() > CACHE_LIMIT) {
+            cache.clear();
+        }
+        return cache;
     }
 
     public static int pack(int nn, int pn, int np, int pp) {
@@ -76,14 +91,16 @@ public final class CollapsibleShape {
     }
 
     public static List<Polygon> polygons(int packed, boolean hanging) {
-        return POLYGONS.computeIfAbsent(packed << 1 | (hanging ? 1 : 0),
-            k -> Collections.unmodifiableList(field(packed, hanging).polygons()));
+        int shape = normalize(packed);
+        return bounded(POLYGONS).computeIfAbsent(shape << 1 | (hanging ? 1 : 0),
+            k -> Collections.unmodifiableList(field(shape, hanging).polygons()));
     }
 
     /** Collision columns (8 per axis), never below the visible surface. */
     public static List<Box> collisionBoxes(int packed, boolean hanging) {
-        return BOXES.computeIfAbsent(packed << 1 | (hanging ? 1 : 0),
-            k -> Collections.unmodifiableList(field(packed, hanging).boxes(8)));
+        int shape = normalize(packed);
+        return bounded(BOXES).computeIfAbsent(shape << 1 | (hanging ? 1 : 0),
+            k -> Collections.unmodifiableList(field(shape, hanging).boxes(8)));
     }
 
     /** Whether a block side is a full face (fixes 1.7.10, which ignored hanging blocks). */

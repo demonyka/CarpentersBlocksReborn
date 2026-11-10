@@ -111,4 +111,22 @@ public class StairsBlock extends BoxedBlock {
     public boolean canCover(BlockState state, AttributeLocation location) {
         return true;
     }
+
+    /** Mobs path over it like a slab or stairs, not through it. */
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean isPathfindable(BlockState state, net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos,
+                                  net.minecraft.world.level.pathfinder.PathComputationType type) {
+        return false;
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public BlockState rotate(BlockState state, net.minecraft.world.level.block.Rotation rotation) {
+        int shape = state.getValue(SHAPE);
+        for (int i = 0; i < rotation.ordinal(); i++) {
+            shape = StairsShape.rotate(shape);
+        }
+        return state.setValue(SHAPE, shape);
+    }
 }

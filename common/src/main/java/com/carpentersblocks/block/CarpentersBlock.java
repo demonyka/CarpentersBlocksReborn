@@ -69,4 +69,12 @@ public class CarpentersBlock extends CoverableBlock {
         click.set(click.state.setValue(SHAPE, SlabShapeProperty.of(next)));
         return true;
     }
+
+    /** Mobs path over it like a slab or stairs, not through it. */
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean isPathfindable(BlockState state, net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos,
+                                  net.minecraft.world.level.pathfinder.PathComputationType type) {
+        return false;
+    }
 }

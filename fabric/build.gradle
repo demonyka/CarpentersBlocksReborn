@@ -25,6 +25,8 @@ dependencies {
 }
 
 processResources {
+    // LGPL: the licence text travels with the binary.
+    from(rootProject.file("LICENSE")) { rename { "LICENSE_carpentersblocks.txt" } }
     inputs.property "version", project.version
     filesMatching("fabric.mod.json") {
         expand "version": project.version
@@ -34,9 +36,18 @@ processResources {
     from(project(":common").loom.accessWidenerPath)
 }
 
+// Release jars leave the automated tests out; "-PwithTests" builds the jar the test scripts run.
+def withTests = project.hasProperty("withTests")
+
 shadowJar {
     configurations = [project.configurations.shadowBundle]
-    archiveClassifier = "dev-shadow"
+    archiveClassifier = withTests ? "dev-shadow-tests" : "dev-shadow"
+    inputs.property "withTests", withTests
+    if (!withTests) {
+        exclude "com/carpentersblocks/client/devtest/**"
+        exclude "com/carpentersblocks/util/SmokeTest*"
+        exclude "com/carpentersblocks/util/MultiplayerTest*"
+    }
     // The access widener now comes from both :fabric and :common; keep one copy.
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
@@ -45,7 +56,7 @@ remapJar {
     archiveBaseName = rootProject.archives_base_name
     inputFile.set shadowJar.archiveFile
     archiveClassifier = null
-    archiveVersion = "${project.version}+mc${rootProject.minecraft_version}-fabric"
+    archiveVersion = "${project.version}+mc${rootProject.minecraft_version}-fabric" + (withTests ? "-tests" : "")
 }
 
 jar { archiveClassifier = "dev" }

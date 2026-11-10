@@ -192,4 +192,28 @@ public class SlopeBlock extends CoverableBlock {
     public List<Polygon> getRenderPolygons(BlockState state) {
         return type(state).polygons();
     }
+
+    /** Mobs path over it like a slab or stairs, not through it. */
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean isPathfindable(BlockState state, net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos,
+                                  net.minecraft.world.level.pathfinder.PathComputationType type) {
+        return false;
+    }
+
+    /** Middle-click gives the item of this slope's kind, not always the wedge. */
+    @Override
+    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+        return new ItemStack(com.carpentersblocks.registry.CBContent.slopeItem(SlopeItem.kindOf(state.getValue(TYPE).core())));
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public BlockState rotate(BlockState state, net.minecraft.world.level.block.Rotation rotation) {
+        SlopeType type = state.getValue(TYPE).core();
+        for (int i = 0; i < rotation.ordinal(); i++) {
+            type = type.rotateY(); // one quarter turn clockwise, like Rotation's order
+        }
+        return state.setValue(TYPE, SlopeTypeProperty.of(type));
+    }
 }

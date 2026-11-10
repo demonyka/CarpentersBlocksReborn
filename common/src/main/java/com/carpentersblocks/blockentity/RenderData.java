@@ -72,6 +72,16 @@ public final class RenderData {
         return covers[side.ordinal()] != null ? side : AttributeLocation.HOST;
     }
 
+    /** Whether every side shows the host cover (no side covers). */
+    public boolean hasOnlyHostCover() {
+        for (int i = 0; i < AttributeLocation.HOST.ordinal(); i++) {
+            if (covers[i] != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static int[] filled(int value) {
         int[] array = new int[7];
         Arrays.fill(array, value);

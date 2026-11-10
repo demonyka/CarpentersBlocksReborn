@@ -68,7 +68,12 @@ public class GarageDoorBlock extends BoxedBlock {
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
     /** Longest column created at once, and largest door toggled at once. */
-    private static final int MAX_LENGTH = 64, MAX_PIECES = 500;
+    private static final int MAX_LENGTH = 64, MAX_PIECES = 256;
+    /**
+     * Set while the whole door is being changed or removed, so its pieces do not each react to
+     * their neighbours changing (one flood fill per piece). Server thread only.
+     */
+    private boolean updatingDoor;
     private static final int PANE = 1, IRON = 2;
 
     public GarageDoorBlock(Properties properties) {
@@ -187,7 +192,7 @@ public class GarageDoorBlock extends BoxedBlock {
         BlockState above = level.getBlockState(pos.above());
         if (above.getBlock() == this) {
             // Lengthening an existing column from below.
-            return above.setValue(HOST, false).setValue(BOTTOM, true);
+            return above.setValue(HOST, false).setValue(BOTTOM, true).setValue(LIGHT, 0);
         }
         if (!above.isFaceSturdy(level, pos.above(), Direction.DOWN)) {
             return null; // hangs from a solid ceiling
@@ -209,21 +214,27 @@ public class GarageDoorBlock extends BoxedBlock {
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
         if (!level.isClientSide) {
-            extendDown(level, pos, state);
+            if (!state.getValue(HOST) && placer instanceof Player && !((Player) placer).abilities.instabuild) {
+                // Lengthening a column is free: only the top piece drops the item when broken.
+                stack.grow(1);
+            }
+            extendDown(level, pos, state, placer);
         }
     }
 
     /** Hangs pieces below until the floor (or the length cap), as 1.7.10 did. */
-    private void extendDown(Level level, BlockPos pos, BlockState state) {
+    private void extendDown(Level level, BlockPos pos, BlockState state, LivingEntity placer) {
         BlockPos top = pos;
         while (level.getBlockState(top.above()).getBlock() == this) {
             top = top.above();
         }
         BlockPos at = pos.below();
-        int length = pos.getY() - top.getY() + 1;
-        BlockState piece = state.setValue(HOST, false);
+        int length = top.getY() - pos.getY() + 1;
+        BlockState piece = state.setValue(HOST, false).setValue(LIGHT, 0);
         while (length < MAX_LENGTH && level.hasChunkAt(at) && level.getBlockState(at).getMaterial().isReplaceable()
-            && !level.getBlockState(at).getMaterial().isLiquid()) {
+            && !level.getBlockState(at).getMaterial().isLiquid()
+            && (!(placer instanceof Player) || com.carpentersblocks.interaction.Permissions.canPlace((Player) placer, level, at))
+            && level.isUnobstructed(piece, at, net.minecraft.world.phys.shapes.CollisionContext.empty())) {
             level.setBlock(at, piece.setValue(BOTTOM, true), BlockFlags.ALL);
             at = at.below();
             length++;
@@ -249,7 +260,7 @@ public class GarageDoorBlock extends BoxedBlock {
     @SuppressWarnings("deprecation")
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         super.onRemove(state, level, pos, newState, isMoving);
-        if (level.isClientSide || state.is(newState.getBlock())) {
+        if (level.isClientSide || state.is(newState.getBlock()) || updatingDoor) {
             return;
         }
         Direction facing = state.getValue(FACING);
@@ -261,10 +272,30 @@ public class GarageDoorBlock extends BoxedBlock {
         }
     }
 
+    /** Creative players get no item: the column is removed here, before the block is broken. */
+    @Override
+    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide && player.isCreative()) {
+            updatingDoor = true;
+            try {
+                Direction facing = state.getValue(FACING);
+                for (Direction dir : new Direction[] { Direction.UP, Direction.DOWN }) {
+                    BlockPos at = pos.relative(dir);
+                    for (int i = 0; i < MAX_LENGTH && isPiece(level.getBlockState(at), facing); i++, at = at.relative(dir)) {
+                        level.setBlock(at, Blocks.AIR.defaultBlockState(), BlockFlags.ALL);
+                    }
+                }
+            } finally {
+                updatingDoor = false;
+            }
+        }
+        super.playerWillDestroy(level, pos, state, player);
+    }
+
     // ---- the whole door -------------------------------------------------------------------
 
     /** All pieces joined up, down and sideways (same facing exactly; 1.7.10 mixed opposites). */
-    private Set<BlockPos> door(BlockGetter level, BlockPos start, Direction facing) {
+    private Set<BlockPos> door(Level level, BlockPos start, Direction facing) {
         Set<BlockPos> seen = new HashSet<>();
         Deque<BlockPos> todo = new ArrayDeque<>();
         todo.add(start);
@@ -276,7 +307,7 @@ public class GarageDoorBlock extends BoxedBlock {
             }
             for (Direction step : steps) {
                 BlockPos next = at.relative(step);
-                if (!seen.contains(next) && isPiece(level.getBlockState(next), facing)) {
+                if (!seen.contains(next) && level.hasChunkAt(next) && isPiece(level.getBlockState(next), facing)) {
                     todo.add(next);
                 }
             }
@@ -285,11 +316,16 @@ public class GarageDoorBlock extends BoxedBlock {
     }
 
     private void setAll(Level level, Set<BlockPos> pieces, java.util.function.UnaryOperator<BlockState> change) {
-        for (BlockPos at : pieces) {
-            BlockState state = level.getBlockState(at);
-            if (state.getBlock() == this) {
-                level.setBlock(at, change.apply(state), BlockFlags.ALL);
+        updatingDoor = true;
+        try {
+            for (BlockPos at : pieces) {
+                BlockState state = level.getBlockState(at);
+                if (state.getBlock() == this) {
+                    level.setBlock(at, change.apply(state), BlockFlags.ALL);
+                }
             }
+        } finally {
+            updatingDoor = false;
         }
     }
 
@@ -310,7 +346,7 @@ public class GarageDoorBlock extends BoxedBlock {
     @Override
     @SuppressWarnings("deprecation")
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (level.isClientSide) {
+        if (level.isClientSide || updatingDoor) {
             return;
         }
         Set<BlockPos> pieces = door(level, pos, state.getValue(FACING));
@@ -342,5 +378,13 @@ public class GarageDoorBlock extends BoxedBlock {
             setAll(click.level, pieces, s -> s.setValue(STYLE, next));
         }
         return true;
+    }
+
+    /** Mobs only path through it while it is open, like vanilla doors and gates. */
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean isPathfindable(BlockState state, net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos,
+                                  net.minecraft.world.level.pathfinder.PathComputationType type) {
+        return type != net.minecraft.world.level.pathfinder.PathComputationType.WATER && state.getValue(OPEN);
     }
 }

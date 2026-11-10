@@ -28,7 +28,7 @@ public class FabricCoverableBlockEntity extends CoverableBlockEntity
 
     @Override
     public CompoundTag toClientTag(CompoundTag tag) {
-        return writeAttributes(tag);
+        return writeClientAttributes(tag);
     }
 
     @Override

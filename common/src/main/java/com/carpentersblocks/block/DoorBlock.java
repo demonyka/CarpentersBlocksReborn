@@ -280,6 +280,9 @@ public class DoorBlock extends BoxedBlock {
 
     /** The other leaf of a double door, as its lower-half position, or null. */
     private BlockPos partner(Level level, BlockPos lowerPos, BlockState state) {
+        if (!state.is(this)) {
+            return null;
+        }
         Direction facing = state.getValue(FACING);
         Direction toPartner = state.getValue(HINGE) == DoorHingeSide.LEFT ? facing.getClockWise() : facing.getCounterClockWise();
         BlockPos at = lowerPos.relative(toPartner);
@@ -328,6 +331,9 @@ public class DoorBlock extends BoxedBlock {
             return;
         }
         BlockPos lowerPos = lower(state, pos);
+        if (!level.getBlockState(lowerPos).is(this)) {
+            return; // the lower half was just removed; updateShape removes this half next
+        }
         BlockPos partner = partner(level, lowerPos, level.getBlockState(lowerPos));
         boolean powered = level.hasNeighborSignal(lowerPos) || level.hasNeighborSignal(lowerPos.above())
             || partner != null && (level.hasNeighborSignal(partner) || level.hasNeighborSignal(partner.above()));
@@ -361,5 +367,13 @@ public class DoorBlock extends BoxedBlock {
             setBoth(click.level, lowerPos, s -> s.setValue(STYLE, styles[(s.getValue(STYLE).ordinal() + 1) % styles.length]), false);
         }
         return true;
+    }
+
+    /** Mobs only path through it while it is open, like vanilla doors and gates. */
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean isPathfindable(BlockState state, net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos,
+                                  net.minecraft.world.level.pathfinder.PathComputationType type) {
+        return type != net.minecraft.world.level.pathfinder.PathComputationType.WATER && state.getValue(OPEN);
     }
 }

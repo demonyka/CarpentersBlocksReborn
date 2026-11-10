@@ -29,8 +29,9 @@ import java.util.List;
  * collision, light and culling work through vanilla code. Decorations live in the
  * {@link CoverableBlockEntity}.
  * <p>
- * Player clicks are routed to {@code Interactions} by loader event hooks, not by
- * {@code Block#use}, because vanilla skips {@code use} when the player sneaks with an item.
+ * Right-clicks reach {@code Interactions} through {@link #use}, after other mods' interaction
+ * events (claims, protection) had their say. Vanilla skips {@code use} when the player sneaks
+ * with an item, so each loader also routes that case here (Forge event, Fabric mixin).
  */
 public abstract class CoverableBlock extends Block implements EntityBlock {
     /** Light emitted by the block, derived from its cover and illuminator. */
@@ -63,6 +64,27 @@ public abstract class CoverableBlock extends Block implements EntityBlock {
     public net.minecraft.world.phys.shapes.VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
         return state.hasProperty(OPAQUE) && state.getValue(OPAQUE)
             ? super.getOcclusionShape(state, level, pos) : net.minecraft.world.phys.shapes.Shapes.empty();
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public net.minecraft.world.InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
+                                                     net.minecraft.world.InteractionHand hand,
+                                                     net.minecraft.world.phys.BlockHitResult hit) {
+        return com.carpentersblocks.interaction.Interactions.use(player, level, hand, hit);
+    }
+
+    /** Turns facing-like properties; blocks with their own orientation encoding override this. */
+    @Override
+    @SuppressWarnings("deprecation")
+    public BlockState rotate(BlockState state, net.minecraft.world.level.block.Rotation rotation) {
+        return Rotations.rotate(state, rotation);
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public BlockState mirror(BlockState state, net.minecraft.world.level.block.Mirror mirror) {
+        return Rotations.mirror(state, mirror);
     }
 
     @Override
@@ -130,8 +152,9 @@ public abstract class CoverableBlock extends Block implements EntityBlock {
     @Override
     @SuppressWarnings("deprecation")
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.is(newState.getBlock())) {
+        if (!state.is(newState.getBlock()) && !isMoving) {
             // Covers, dyes, etc. drop however the block disappears: player, explosion, /setblock.
+            // Not when a mod moves the block together with its block entity.
             BlockEntity blockEntity = level.getBlockEntity(pos);
             if (blockEntity instanceof CoverableBlockEntity) {
                 ((CoverableBlockEntity) blockEntity).dropAttributes();

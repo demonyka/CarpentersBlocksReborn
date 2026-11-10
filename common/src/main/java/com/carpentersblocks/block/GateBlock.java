@@ -280,4 +280,12 @@ public class GateBlock extends BoxedBlock {
         click.set(click.state.setValue(TYPE, click.sneaking ? type.nextVanilla() : type.next()));
         return true;
     }
+
+    /** Mobs only path through it while it is open, like vanilla doors and gates. */
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean isPathfindable(BlockState state, net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos,
+                                  net.minecraft.world.level.pathfinder.PathComputationType type) {
+        return type != net.minecraft.world.level.pathfinder.PathComputationType.WATER && state.getValue(OPEN);
+    }
 }

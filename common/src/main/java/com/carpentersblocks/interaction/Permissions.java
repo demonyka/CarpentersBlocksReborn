@@ -22,6 +22,11 @@ public final class Permissions {
         return player.mayBuild() && canUse(player, level, pos);   // mayBuild: false in adventure mode
     }
 
+    /** Placing an extra block on the player's behalf (the rest of a garage door column). */
+    public static boolean canPlace(Player player, Level level, BlockPos pos) {
+        return player.mayBuild() && !player.isSpectator() && level.hasChunkAt(pos) && level.mayInteract(player, pos);
+    }
+
     /** Using the block like a vanilla door or button: also allowed in adventure mode. */
     public static boolean canUse(Player player, Level level, BlockPos pos) {
         return !player.isSpectator()

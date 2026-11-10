@@ -2,6 +2,7 @@ name: build
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -22,8 +23,8 @@ jobs:
           java-version: 17
           cache: gradle
 
-      - name: Build and unit-test
-        run: ./gradlew build --console=plain
+      - name: Build and unit-test (jars with the automated tests inside)
+        run: ./gradlew build -PwithTests --console=plain
 
       - name: Smoke test on a real Fabric server
         run: tools/smoke-test.sh fabric
@@ -32,6 +33,19 @@ jobs:
 
       - name: Smoke test on a real Forge server
         run: tools/smoke-test.sh forge
+        env:
+          SERVER_JAVA: ${{ steps.java8.outputs.path }}/bin/java
+
+      - name: Build the release jars
+        run: ./gradlew build --console=plain
+
+      - name: Release jar starts on a real Fabric server
+        run: tools/smoke-test.sh fabric release
+        env:
+          SERVER_JAVA: ${{ steps.java8.outputs.path }}/bin/java
+
+      - name: Release jar starts on a real Forge server
+        run: tools/smoke-test.sh forge release
         env:
           SERVER_JAVA: ${{ steps.java8.outputs.path }}/bin/java
 

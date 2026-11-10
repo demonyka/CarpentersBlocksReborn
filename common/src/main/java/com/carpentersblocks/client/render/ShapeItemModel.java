@@ -19,6 +19,8 @@ import java.util.Random;
 public final class ShapeItemModel implements BakedModel {
     private final BakedModel base;
     private final BlockState state;
+    /** Built once: the model is recreated on every resource reload. */
+    private List<BakedQuad>[] quads;
 
     /** @param state block state whose shape and uncovered textures the item shows */
     public ShapeItemModel(BakedModel base, BlockState state) {
@@ -28,7 +30,10 @@ public final class ShapeItemModel implements BakedModel {
 
     @Override
     public List<BakedQuad> getQuads(BlockState state, Direction side, Random rand) {
-        return CoverModelBuilder.quads(this.state, side, rand, RenderData.EMPTY, base);
+        if (quads == null) {
+            quads = CoverModelBuilder.collect(this.state, RenderData.EMPTY, base, CoverModelBuilder.PLAIN, 0, cover -> true, true);
+        }
+        return quads[side == null ? 6 : side.ordinal()];
     }
 
     @Override

@@ -202,8 +202,9 @@ public class HatchBlock extends BoxedBlock {
             return null; // only on the side of a support, as in 1.7.10
         }
         double hitY = context.getClickLocation().y - context.getClickedPos().getY();
+        boolean powered = context.getLevel().hasNeighborSignal(context.getClickedPos());
         return defaultBlockState().setValue(FACING, face).setValue(HIGH, hitY > 0.5)
-            .setValue(POWERED, context.getLevel().hasNeighborSignal(context.getClickedPos()));
+            .setValue(POWERED, powered).setValue(OPEN, powered);
     }
 
     @Override
@@ -296,5 +297,13 @@ public class HatchBlock extends BoxedBlock {
             click.set(click.state.setValue(STYLE, styles[(click.state.getValue(STYLE).ordinal() + 1) % styles.length]));
         }
         return true;
+    }
+
+    /** Mobs only path through it while it is open, like vanilla doors and gates. */
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean isPathfindable(BlockState state, net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos,
+                                  net.minecraft.world.level.pathfinder.PathComputationType type) {
+        return type != net.minecraft.world.level.pathfinder.PathComputationType.WATER && state.getValue(OPEN);
     }
 }

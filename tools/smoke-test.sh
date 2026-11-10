@@ -5,7 +5,10 @@
 # Usage: tools/smoke-test.sh fabric|forge
 # Env:   SERVER_JAVA  java used to run the server (default: JDK 8 from ~/.jdks)
 #
-# Build first: ./gradlew build
+# Build first: ./gradlew build -PwithTests   (the test jar; release jars have no tests)
+#
+# tools/smoke-test.sh <platform> release   starts a server with the RELEASE jar instead, waits
+# until it is up, stops it and fails on any error that mentions the mod.
 set -euo pipefail
 
 PLATFORM="${1:?usage: $0 fabric|forge}"
@@ -15,10 +18,14 @@ source <(grep -E '^(mod_version|minecraft_version|fabric_loader_version|fabric_a
 
 SERVER_JAVA="${SERVER_JAVA:-$(ls -d "$HOME"/.jdks/jdk8*/ 2>/dev/null | head -1)bin/java}"
 DIR="$ROOT/run-dedicated/$PLATFORM"
-MOD_JAR="$ROOT/$PLATFORM/build/libs/carpentersblocks-${mod_version}+mc${minecraft_version}-${PLATFORM}.jar"
+MOD_JAR="$ROOT/$PLATFORM/build/libs/carpentersblocks-${mod_version}+mc${minecraft_version}-${PLATFORM}-tests.jar"
 FABRIC_INSTALLER_VERSION=1.0.1
 
-[ -f "$MOD_JAR" ] || { echo "Mod jar not found: $MOD_JAR (run ./gradlew build)"; exit 2; }
+MODE="${2:-test}"
+if [ "$MODE" = release ]; then
+  MOD_JAR="${MOD_JAR%-tests.jar}.jar"
+fi
+[ -f "$MOD_JAR" ] || { echo "Mod jar not found: $MOD_JAR (run ./gradlew build -PwithTests)"; exit 2; }
 mkdir -p "$DIR/mods"
 cd "$DIR"
 
@@ -52,6 +59,23 @@ spawn-protection=0
 max-tick-time=-1
 PROPS
 rm -rf world logs
+
+if [ "$MODE" = release ]; then
+  echo "Starting $PLATFORM server with the release jar ..."
+  : > server-stdout.log
+  set +e
+  ( for i in $(seq 1 600); do grep -q 'Done (' server-stdout.log && break; sleep 1; done; echo stop ) \
+    | timeout 660 "$SERVER_JAVA" -Xmx2G -jar "$SERVER_JAR" nogui > server-stdout.log 2>&1
+  CODE=$?
+  set -e
+  if grep -q 'Done (' server-stdout.log && ! grep -iE "carpentersblocks|Carpenter's Blocks" server-stdout.log | grep -qiE "error|exception|NoClassDefFound"; then
+    echo "PASS ($PLATFORM release): server started and stopped cleanly, exit code $CODE"
+    exit 0
+  fi
+  echo "FAIL ($PLATFORM release), exit code $CODE:"
+  grep -iE "carpentersblocks|Carpenter's Blocks|Exception|NoClassDefFound" server-stdout.log | head -30
+  exit 1
+fi
 
 echo "Starting $PLATFORM server with $SERVER_JAVA ..."
 set +e

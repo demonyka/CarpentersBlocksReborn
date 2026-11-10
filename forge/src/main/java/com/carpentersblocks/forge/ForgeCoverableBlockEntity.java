@@ -29,7 +29,7 @@ public class ForgeCoverableBlockEntity extends CoverableBlockEntity {
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
-        return new ClientboundBlockEntityDataPacket(getBlockPos(), 0, writeAttributes(new CompoundTag()));
+        return new ClientboundBlockEntityDataPacket(getBlockPos(), 0, writeClientAttributes(new CompoundTag()));
     }
 
     @Override

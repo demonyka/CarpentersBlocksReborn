@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.carpentersblocks.forge.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "carpentersblocks-forge-refmap.json",
+  "plugin": "com.carpentersblocks.forge.mixin.ForgeMixinPlugin",
+  "mixins": [
+    "CtmFacadeMixin"
+  ],
+  "client": [
+    "BlockMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

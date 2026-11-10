@@ -31,6 +31,12 @@ import java.util.Set;
 public final class CarpentersBlocksFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        net.fabricmc.loader.api.FabricLoader loader = net.fabricmc.loader.api.FabricLoader.getInstance();
+        if (loader.isModLoaded("sodium") && !loader.isModLoaded("indium")) {
+            CarpentersBlocks.LOGGER.warn("Sodium is installed without Indium: Carpenter's Blocks will be drawn without their covers. "
+                + "Install Indium (Fabric Rendering API support for Sodium).");
+        }
+
         // Client side: predict the hammer click, stop vanilla breaking, ask the server to do it.
         AttackBlockCallback.EVENT.register((player, level, hand, pos, face) -> {
             if (level.isClientSide && Interactions.attack(player, level, pos, face, true)) {
@@ -80,7 +86,7 @@ public final class CarpentersBlocksFabricClient implements ClientModInitializer 
             return null;
         });
 
-        if (ClientTestHarness.enabled()) {
+        if (com.carpentersblocks.util.DevTests.client()) {
             ClientTickEvents.END_CLIENT_TICK.register(client -> ClientTestHarness.tick());
         }
     }

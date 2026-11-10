@@ -44,7 +44,7 @@ public final class CarpentersBlocksForgeClient {
             }
         });
 
-        if (ClientTestHarness.enabled()) {
+        if (com.carpentersblocks.util.DevTests.client()) {
             MinecraftForge.EVENT_BUS.addListener((TickEvent.ClientTickEvent event) -> {
                 if (event.phase == TickEvent.Phase.END) {
                     ClientTestHarness.tick();
@@ -54,9 +54,9 @@ public final class CarpentersBlocksForgeClient {
     }
 
     private static void onClientSetup(FMLClientSetupEvent event) {
-        // Cutout so glass and leaves work as covers.
+        // Every layer: each cover is drawn in its own (stained glass translucent, leaves cut out...).
         for (Block block : CBContent.coverableBlocks()) {
-            ItemBlockRenderTypes.setRenderLayer(block, RenderType.cutoutMipped());
+            ItemBlockRenderTypes.setRenderLayer(block, layer -> layer != RenderType.tripwire());
         }
     }
 

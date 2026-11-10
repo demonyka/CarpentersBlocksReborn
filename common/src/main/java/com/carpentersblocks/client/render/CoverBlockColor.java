@@ -30,7 +30,11 @@ public final class CoverBlockColor implements BlockColor {
         BlockState cover = data.cover(location);
         int coverTint = TintIndex.coverTint(tintIndex);
         if (cover != null && coverTint >= 0) {
-            return Minecraft.getInstance().getBlockColors().getColor(cover, level, pos, coverTint);
+            try {
+                return Minecraft.getInstance().getBlockColors().getColor(cover, level, pos, coverTint);
+            } catch (RuntimeException e) {
+                return -1; // a modded colour provider that expects its own block at this position
+            }
         }
         return -1;
     }

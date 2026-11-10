@@ -5,10 +5,13 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "carpentersblocks-fabric-refmap.json",
   "mixins": [
-    "LivingEntityMixin"
+    "LivingEntityMixin",
+    "ServerPlayerGameModeMixin"
   ],
   "client": [
-    "MouseHandlerMixin"
+    "BlockMixin",
+    "MouseHandlerMixin",
+    "MultiPlayerGameModeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

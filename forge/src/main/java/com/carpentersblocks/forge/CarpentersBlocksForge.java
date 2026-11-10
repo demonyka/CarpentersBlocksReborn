@@ -3,11 +3,14 @@ package com.carpentersblocks.forge;
 import com.carpentersblocks.CarpentersBlocks;
 import com.carpentersblocks.interaction.Interactions;
 import com.carpentersblocks.platform.forge.PlatformImpl;
+import com.carpentersblocks.util.DevTests;
 import com.carpentersblocks.util.MultiplayerTest;
 import com.carpentersblocks.util.SmokeTest;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraft.world.InteractionResult;
+import com.carpentersblocks.block.CoverableBlock;
+import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.DistExecutor;
@@ -25,25 +28,30 @@ public final class CarpentersBlocksForge {
         PlatformImpl.registerAll(modBus);
         ForgeNetwork.register();
 
-        MinecraftForge.EVENT_BUS.addListener(CarpentersBlocksForge::onRightClickBlock);
-        MinecraftForge.EVENT_BUS.addListener(CarpentersBlocksForge::onLeftClickBlock);
-        MinecraftForge.EVENT_BUS.addListener((FMLServerStartedEvent event) -> SmokeTest.onServerStarted(event.getServer()));
-        MinecraftForge.EVENT_BUS.addListener((FMLServerStartedEvent event) -> MultiplayerTest.onServerStarted(event.getServer()));
-        MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> MultiplayerTest.onPlayerJoin((ServerPlayer) event.getPlayer()));
-        MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent event) -> MultiplayerTest.onPlayerLeave((ServerPlayer) event.getPlayer()));
+        // Last and never for cancelled events: claim and protection mods decide first.
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, PlayerInteractEvent.RightClickBlock.class,
+            CarpentersBlocksForge::onRightClickBlock);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, PlayerInteractEvent.LeftClickBlock.class,
+            CarpentersBlocksForge::onLeftClickBlock);
+        if (DevTests.server()) {
+            MinecraftForge.EVENT_BUS.addListener((FMLServerStartedEvent event) -> SmokeTest.onServerStarted(event.getServer()));
+            MinecraftForge.EVENT_BUS.addListener((FMLServerStartedEvent event) -> MultiplayerTest.onServerStarted(event.getServer()));
+            MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> MultiplayerTest.onPlayerJoin((ServerPlayer) event.getPlayer()));
+            MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent event) -> MultiplayerTest.onPlayerLeave((ServerPlayer) event.getPlayer()));
+        }
 
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> CarpentersBlocksForgeClient.init(modBus));
     }
 
     /**
-     * Fires on both sides before vanilla skips {@code Block#use} for sneaking players.
-     * On the server it runs after vanilla checked reach and spawn protection.
+     * Vanilla skips {@code Block#use} for players sneaking with an item, which is how dyes and
+     * side covers are applied. Asking Forge to use the block anyway sends the click to
+     * {@code CoverableBlock#use} on both sides, unless another mod denied it.
      */
     private static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
-        InteractionResult result = Interactions.use(event.getPlayer(), event.getWorld(), event.getHand(), event.getHitVec());
-        if (result != InteractionResult.PASS) {
-            event.setCanceled(true);
-            event.setCancellationResult(result);
+        if (event.getUseBlock() != Event.Result.DENY && event.getWorld().hasChunkAt(event.getPos())
+            && event.getWorld().getBlockState(event.getPos()).getBlock() instanceof CoverableBlock) {
+            event.setUseBlock(Event.Result.ALLOW);
         }
     }
 
@@ -52,6 +60,9 @@ public final class CarpentersBlocksForge {
      * reach check (does the work). The client still sends the vanilla packet when cancelled.
      */
     private static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+        if (event.getUseItem() == Event.Result.DENY) {
+            return;
+        }
         boolean client = event.getWorld().isClientSide;
         if (Interactions.attack(event.getPlayer(), event.getWorld(), event.getPos(), event.getFace(), client)) {
             event.setCanceled(true);

@@ -59,18 +59,15 @@ public final class Interactions {
 
         // Plain use (open, press, toggle): allowed wherever vanilla allows using a door.
         if (kind == HeldItemKind.OTHER) {
-            if (hand == InteractionHand.OFF_HAND && !player.getMainHandItem().isEmpty()) {
-                return InteractionResult.PASS; // the main hand already had its turn
-            }
-            return Permissions.canUse(player, level, pos) ? block.activate(state, level, pos, player, hand, hit) : InteractionResult.PASS;
+            return activate(block, state, player, level, hand, hit);
         }
         if (!Permissions.canModify(player, level, pos)) {
-            return InteractionResult.PASS;
+            return activate(block, state, player, level, hand, hit); // adventure mode still opens a door with a block in hand
         }
         if (kind == HeldItemKind.HAMMER) {
             Vec3 local = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
             if (!block.onHammer(new HammerClick(state, level, pos, player, face, local, false, client))) {
-                return InteractionResult.PASS;
+                return activate(block, state, player, level, hand, hit); // e.g. a lever: the hammer just flips it
             }
             if (!client) {
                 damageTool(player, hand, held);
@@ -81,7 +78,8 @@ public final class Interactions {
         AttributeKey target = AttributeRules.addTarget(kind, player.isShiftKeyDown(), Sides.toCore(face), be,
             location -> block.canCover(state, location));
         if (target == null) {
-            return InteractionResult.PASS; // e.g. slot taken: vanilla may place the block next to ours
+            // Slot taken: open the door; blocks without a use let vanilla place the held block.
+            return activate(block, state, player, level, hand, hit);
         }
         if (!client) {
             be.putItem(target, held);
@@ -91,6 +89,23 @@ public final class Interactions {
             playPlaceSound(level, pos, target.type == AttributeType.COVER ? held : be.getItem(coverFor(target)));
         }
         return InteractionResult.sidedSuccess(client);
+    }
+
+    /**
+     * Opens, presses or toggles the block. Like vanilla, sneaking with an item in hand never
+     * uses a block (the item is used instead, e.g. placed against a door).
+     */
+    private static InteractionResult activate(CoverableBlock block, BlockState state, Player player, Level level,
+                                              InteractionHand hand, BlockHitResult hit) {
+        boolean holding = !player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty();
+        if (player.isShiftKeyDown() && holding) {
+            return InteractionResult.PASS;
+        }
+        if (hand == InteractionHand.OFF_HAND && !player.getMainHandItem().isEmpty()) {
+            return InteractionResult.PASS; // the main hand already had its turn
+        }
+        return Permissions.canUse(player, level, hit.getBlockPos())
+            ? block.activate(state, level, hit.getBlockPos(), player, hand, hit) : InteractionResult.PASS;
     }
 
     /**
@@ -108,7 +123,8 @@ public final class Interactions {
         CoverableBlock block = (CoverableBlock) state.getBlock();
         CoverableBlockEntity be = blockEntity(level, pos);
         ItemStack held = player.getMainHandItem();
-        if (be == null || ItemClassifier.classify(held) != HeldItemKind.HAMMER || !Permissions.canModify(player, level, pos)) {
+        if (be == null || !player.isAlive() || ItemClassifier.classify(held) != HeldItemKind.HAMMER
+            || !Permissions.canModify(player, level, pos)) {
             return false;
         }
 

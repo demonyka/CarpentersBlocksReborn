@@ -15,14 +15,14 @@ SERVER_JAVA="${SERVER_JAVA:-$(ls -d "$HOME"/.jdks/jdk8*/ 2>/dev/null | head -1)b
 export JAVA_HOME="${JAVA_HOME:-$(ls -d "$HOME"/.jdks/jdk-17*/ 2>/dev/null | head -1)}"
 DIR="$ROOT/run-dedicated/$PLATFORM"
 RUN="$ROOT/$PLATFORM/run-clienttest"
-MOD_JAR="$ROOT/$PLATFORM/build/libs/carpentersblocks-${mod_version}+mc${minecraft_version}-${PLATFORM}.jar"
+MOD_JAR="$ROOT/$PLATFORM/build/libs/carpentersblocks-${mod_version}+mc${minecraft_version}-${PLATFORM}-tests.jar"
 
 case "$PLATFORM" in
   fabric) SERVER_JAR=fabric-server-launch.jar ;;
   forge)  SERVER_JAR="forge-${forge_version}.jar" ;;
 esac
 [ -f "$DIR/$SERVER_JAR" ] || { echo "Server not installed; run tools/smoke-test.sh $PLATFORM first"; exit 2; }
-[ -f "$MOD_JAR" ] || { echo "Mod jar not found (./gradlew build)"; exit 2; }
+[ -f "$MOD_JAR" ] || { echo "Mod jar not found (./gradlew build -PwithTests)"; exit 2; }
 
 cd "$DIR"
 rm -f mods/carpentersblocks-*.jar

@@ -26,22 +26,33 @@ dependencies {
 }
 
 processResources {
+    // LGPL: the licence text travels with the binary.
+    from(rootProject.file("LICENSE")) { rename { "LICENSE_carpentersblocks.txt" } }
     inputs.property "version", project.version
     filesMatching("META-INF/mods.toml") {
         expand "version": project.version
     }
 }
 
+// Release jars leave the automated tests out; "-PwithTests" builds the jar the test scripts run.
+def withTests = project.hasProperty("withTests")
+
 shadowJar {
     configurations = [project.configurations.shadowBundle]
-    archiveClassifier = "dev-shadow"
+    archiveClassifier = withTests ? "dev-shadow-tests" : "dev-shadow"
+    inputs.property "withTests", withTests
+    if (!withTests) {
+        exclude "com/carpentersblocks/client/devtest/**"
+        exclude "com/carpentersblocks/util/SmokeTest*"
+        exclude "com/carpentersblocks/util/MultiplayerTest*"
+    }
 }
 
 remapJar {
     archiveBaseName = rootProject.archives_base_name
     inputFile.set shadowJar.archiveFile
     archiveClassifier = null
-    archiveVersion = "${project.version}+mc${rootProject.minecraft_version}-forge"
+    archiveVersion = "${project.version}+mc${rootProject.minecraft_version}-forge" + (withTests ? "-tests" : "")
 }
 
 jar { archiveClassifier = "dev" }
@@ -65,5 +76,20 @@ loom {
     forge {
         convertAccessWideners = true
         extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
+        mixinConfig "carpentersblocks-forge.mixins.json"
     }
+    mixin {
+        defaultRefmapName = "carpentersblocks-forge-refmap.json"
+    }
+}
+
+// The CTM mod's facade interface (Chisel's connected textures); only needed to compile.
+repositories {
+    maven {
+        url "https://maven.tterrag.com/"
+        content { includeGroup "team.chisel.ctm" }
+    }
+}
+dependencies {
+    modCompileOnly("team.chisel.ctm:CTM:MC1.16.1-1.1.2.6") { transitive = false }
 }

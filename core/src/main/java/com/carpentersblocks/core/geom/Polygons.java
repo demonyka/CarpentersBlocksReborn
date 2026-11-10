@@ -145,6 +145,94 @@ public final class Polygons {
         }
     }
 
+    /** Whether the face's texture coordinates are the world-aligned ones of {@link #uv} (not a rotated part). */
+    public static boolean hasWorldUvs(Polygon polygon) {
+        for (int i = 0; i < 4; i++) {
+            float[] uv = uv(polygon.direction, polygon.vertices[i]);
+            if (Math.abs(uv[0] - polygon.uvs[i * 2]) > 1e-3 || Math.abs(uv[1] - polygon.uvs[i * 2 + 1]) > 1e-3) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The part of a face inside a rectangle of its texture space (pixels, as in {@link #uv}),
+     * as one or more faces. Used when a cover draws a block side with several quads (connected
+     * textures split a side into quarters). Empty when nothing is inside.
+     */
+    public static List<Polygon> clip(Polygon polygon, double u0, double v0, double u1, double v1) {
+        List<Vec3d> ring = new ArrayList<>(4);
+        for (Vec3d v : polygon.vertices) {
+            if (ring.isEmpty() || !same(ring.get(ring.size() - 1), v)) {
+                ring.add(v);
+            }
+        }
+        if (ring.size() > 1 && same(ring.get(0), ring.get(ring.size() - 1))) {
+            ring.remove(ring.size() - 1);
+        }
+        Side side = polygon.direction;
+        ring = clipEdge(ring, side, 0, u0, true);
+        ring = clipEdge(ring, side, 0, u1, false);
+        ring = clipEdge(ring, side, 1, v0, true);
+        ring = clipEdge(ring, side, 1, v1, false);
+        List<Polygon> out = new ArrayList<>(2);
+        // A clipped quad has up to 8 corners: split it into quads fanning out from the first.
+        for (int i = 1; i + 1 < ring.size(); i += 2) {
+            List<Vec3d> piece = new ArrayList<>(4);
+            piece.add(ring.get(0));
+            piece.add(ring.get(i));
+            piece.add(ring.get(i + 1));
+            if (i + 2 < ring.size()) {
+                piece.add(ring.get(i + 2));
+            }
+            Polygon built = build(piece, polygon.cullFace, polygon.coverSide, polygon.part);
+            if (built.area() > 1e-9) {
+                // Keep the original's shading direction (a tie could otherwise pick another axis).
+                out.add(built.direction == side ? built
+                    : new Polygon(orderForSlots(piece, side), polygon.normal, side, polygon.cullFace, polygon.coverSide,
+                        uvsOf(orderForSlots(piece, side), side), polygon.part));
+            }
+        }
+        return out;
+    }
+
+    private static float[] uvsOf(Vec3d[] ordered, Side direction) {
+        float[] uvs = new float[8];
+        for (int i = 0; i < 4; i++) {
+            float[] uv = uv(direction, ordered[i]);
+            uvs[i * 2] = uv[0];
+            uvs[i * 2 + 1] = uv[1];
+        }
+        return uvs;
+    }
+
+    private static boolean same(Vec3d a, Vec3d b) {
+        return a.sub(b).length() < 1e-7;
+    }
+
+    /** One Sutherland-Hodgman pass: keeps the side of {@code limit} that is inside. */
+    private static List<Vec3d> clipEdge(List<Vec3d> ring, Side side, int axis, double limit, boolean keepGreater) {
+        List<Vec3d> out = new ArrayList<>(ring.size() + 2);
+        for (int i = 0; i < ring.size(); i++) {
+            Vec3d a = ring.get(i), b = ring.get((i + 1) % ring.size());
+            double da = uv(side, a)[axis] - limit, db = uv(side, b)[axis] - limit;
+            if (!keepGreater) {
+                da = -da;
+                db = -db;
+            }
+            boolean aIn = da >= -1e-6, bIn = db >= -1e-6;
+            if (aIn) {
+                out.add(a);
+            }
+            if (aIn != bIn) {
+                double t = da / (da - db);
+                out.add(a.add(b.sub(a).scale(t)));
+            }
+        }
+        return out;
+    }
+
     /** 2D coordinates of a point in the plane of {@code side}: (x,z), (x,y) or (z,y). */
     public static double[] project(Side side, Vec3d p) {
         switch (side) {

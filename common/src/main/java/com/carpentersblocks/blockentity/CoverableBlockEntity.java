@@ -27,7 +27,8 @@ import java.util.Map;
  * <p>
  * Subclasses exist per loader only to send updates to clients ({@link #syncToClients()}).
  */
-public abstract class CoverableBlockEntity extends BlockEntity implements AttributeView {
+public abstract class CoverableBlockEntity extends BlockEntity implements AttributeView, net.minecraft.world.Clearable {
+    private static final int MAX_DESIGN_LENGTH = 64;
     /** Bump when the saved layout changes, and migrate in {@link #readAttributes}. */
     private static final int FORMAT_VERSION = 1;
     private static final String TAG_VERSION = "cbVersion";
@@ -119,6 +120,14 @@ public abstract class CoverableBlockEntity extends BlockEntity implements Attrib
         }
     }
 
+    /** Empties the block without dropping anything ({@code /clone ... move} and similar). */
+    @Override
+    public void clearContent() {
+        items.clear();
+        designs.clear();
+        renderData = RenderData.of(items, shapeData);
+    }
+
     /** Drops every stored item. Called when the block is removed. */
     public void dropAttributes() {
         if (level == null || level.isClientSide) {
@@ -162,14 +171,32 @@ public abstract class CoverableBlockEntity extends BlockEntity implements Attrib
         return 0;
     }
 
-    /** A host cover that is an opaque full block (glass, leaves and the bare frame are not). */
+    /**
+     * Every visible cover is an opaque full block (glass, leaves and the bare frame are not):
+     * the host cover, and any side cover drawn over it.
+     */
     public boolean hasOpaqueCover() {
-        ItemStack cover = items.get(AttributeKey.of(AttributeType.COVER, AttributeLocation.HOST));
+        if (!isOpaque(items.get(AttributeKey.of(AttributeType.COVER, AttributeLocation.HOST)))) {
+            return false;
+        }
+        for (Map.Entry<AttributeKey, ItemStack> entry : items.entrySet()) {
+            if (entry.getKey().type == AttributeType.COVER && !isOpaque(entry.getValue())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isOpaque(ItemStack cover) {
         if (cover == null || !(cover.getItem() instanceof BlockItem)) {
             return false;
         }
         BlockState coverState = ((BlockItem) cover.getItem()).getBlock().defaultBlockState();
-        return coverState.canOcclude() && coverState.isSolidRender(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
+        try {
+            return coverState.canOcclude() && coverState.isSolidRender(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
+        } catch (RuntimeException e) {
+            return false; // a modded block that needs its own world position
+        }
     }
 
     private void updateLight() {
@@ -198,14 +225,29 @@ public abstract class CoverableBlockEntity extends BlockEntity implements Attrib
     protected void onClientDataReceived() {
         if (level != null && level.isClientSide) {
             BlockState state = getBlockState();
-            level.sendBlockUpdated(getBlockPos(), state, state, BlockFlags.RERENDER_NOW);
+            // Not "re-render now": that rebuilds the section on the main thread, and this also
+            // runs for every block of a chunk that has just arrived.
+            level.sendBlockUpdated(getBlockPos(), state, state, BlockFlags.CLIENTS);
         }
     }
 
     public CompoundTag writeAttributes(CompoundTag tag) {
+        return writeAttributes(tag, false);
+    }
+
+    /**
+     * What clients need to draw the block: item ids only. Item NBT (names, lore, written data)
+     * stays on the server, which also keeps chunk packets small.
+     */
+    public CompoundTag writeClientAttributes(CompoundTag tag) {
+        return writeAttributes(tag, true);
+    }
+
+    private CompoundTag writeAttributes(CompoundTag tag, boolean forClient) {
         tag.putInt(TAG_VERSION, FORMAT_VERSION);
         CompoundTag itemsTag = new CompoundTag();
-        items.forEach((key, stack) -> itemsTag.put(key.id(), stack.save(new CompoundTag())));
+        items.forEach((key, stack) -> itemsTag.put(key.id(),
+            (forClient ? new ItemStack(stack.getItem()) : stack).save(new CompoundTag())));
         tag.put(TAG_ITEMS, itemsTag);
         CompoundTag designsTag = new CompoundTag();
         designs.forEach((key, design) -> designsTag.putString(key.id(), design));
@@ -226,16 +268,21 @@ public abstract class CoverableBlockEntity extends BlockEntity implements Attrib
             }
             ItemStack stack = ItemStack.of(itemsTag.getCompound(id));
             // An item from a removed mod loads as empty; skip it instead of keeping a broken slot.
-            if (!stack.isEmpty()) {
-                items.put(key, stack);
+            // A cover can only be a block that is not one of ours (hand-edited or crafted NBT).
+            if (stack.isEmpty() || key.type == AttributeType.COVER && !(stack.getItem() instanceof BlockItem
+                && !(((BlockItem) stack.getItem()).getBlock() instanceof CoverableBlock))) {
+                continue;
             }
+            stack.setCount(1); // a slot holds one item, whatever the data says
+            items.put(key, stack);
         }
         shapeData = tag.getInt(TAG_SHAPE);
         CompoundTag designsTag = tag.getCompound(TAG_DESIGNS);
         for (String id : designsTag.getAllKeys()) {
             AttributeKey key = AttributeKey.parse(id);
             if (key != null && key.type == AttributeType.DESIGN) {
-                designs.put(key, designsTag.getString(id));
+                String design = designsTag.getString(id);
+                designs.put(key, design.length() > MAX_DESIGN_LENGTH ? design.substring(0, MAX_DESIGN_LENGTH) : design);
             }
         }
         renderData = RenderData.of(items, shapeData);
@@ -245,6 +292,11 @@ public abstract class CoverableBlockEntity extends BlockEntity implements Attrib
     public void load(BlockState state, CompoundTag tag) {
         super.load(state, tag);
         readAttributes(tag);
+        if (level != null && !level.isClientSide) {
+            // Data applied to a block already in the world (an item with BlockEntityTag, /data).
+            updateLight();
+            syncToClients();
+        }
     }
 
     @Override
@@ -256,6 +308,6 @@ public abstract class CoverableBlockEntity extends BlockEntity implements Attrib
     /** Full data sent with the chunk when a client starts tracking it. */
     @Override
     public CompoundTag getUpdateTag() {
-        return save(new CompoundTag());
+        return writeClientAttributes(super.save(new CompoundTag()));
     }
 }

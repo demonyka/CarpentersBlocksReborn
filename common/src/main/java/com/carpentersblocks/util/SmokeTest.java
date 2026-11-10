@@ -211,6 +211,103 @@ public final class SmokeTest {
         garageDrops.forEach(ItemEntity::remove);
 
         runBehaviour(level, pos.east(4), failures);
+        runRegressions(level, pos.east(12), failures);
+    }
+
+    /** Bugs found in review: each of these once crashed, duplicated or lost something. */
+    private static void runRegressions(ServerLevel level, BlockPos pos, List<String> failures) {
+        BlockState stone = Blocks.STONE.defaultBlockState();
+        AttributeKey cover = AttributeKey.of(AttributeType.COVER, AttributeLocation.HOST);
+
+        // Door: removing the LOWER half used to throw in the upper half's neighbour update.
+        com.carpentersblocks.block.DoorBlock door = com.carpentersblocks.registry.CBBlocks.DOOR.get();
+        level.setBlockAndUpdate(pos.below(), stone);
+        for (int round = 0; round < 3; round++) {
+            BlockState lower = door.defaultBlockState();
+            level.setBlockAndUpdate(pos, lower);
+            door.setPlacedBy(level, pos, lower, null, ItemStack.EMPTY);
+            if (round == 0) {
+                level.destroyBlock(pos, true);                       // a player breaking the bottom
+            } else if (round == 1) {
+                level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());   // /setblock
+            } else {
+                level.setBlockAndUpdate(pos.below(), Blocks.AIR.defaultBlockState()); // the floor goes
+                level.setBlockAndUpdate(pos.below(), stone);
+            }
+            check(failures, "door round " + round + ": both halves gone",
+                level.getBlockState(pos).isAir() && level.getBlockState(pos.above()).isAir());
+        }
+        List<ItemEntity> doorDrops = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(3), ItemEntity::isAlive);
+        long doors = doorDrops.stream().filter(e -> e.getItem().getItem() == door.asItem()).mapToLong(e -> e.getItem().getCount()).sum();
+        check(failures, "doors broken from below drop one each, except /setblock (got " + doors + ")", doors == 2);
+        doorDrops.forEach(ItemEntity::remove);
+
+        // Garage door, 3 wide and 3 tall: redstone opens and closes every piece, once.
+        com.carpentersblocks.block.GarageDoorBlock garage = com.carpentersblocks.registry.CBBlocks.GARAGE_DOOR.get();
+        BlockPos top = pos.above(2);
+        for (int x = 0; x < 3; x++) {
+            level.setBlockAndUpdate(pos.east(x).below(), stone);
+            level.setBlockAndUpdate(top.east(x).above(), stone);
+            BlockState host = garage.defaultBlockState();
+            level.setBlockAndUpdate(top.east(x), host);
+            garage.setPlacedBy(level, top.east(x), host, null, ItemStack.EMPTY);
+        }
+        check(failures, "garage door is 3 high", level.getBlockState(pos.east(2)).getBlock() == garage);
+        level.setBlockAndUpdate(pos.east(3), Blocks.REDSTONE_BLOCK.defaultBlockState());
+        boolean allOpen = true, allClosed = true;
+        for (int x = 0; x < 3; x++) {
+            for (int y = 0; y < 3; y++) {
+                allOpen &= level.getBlockState(pos.offset(x, y, 0)).getValue(com.carpentersblocks.block.GarageDoorBlock.OPEN);
+            }
+        }
+        check(failures, "redstone opens every garage door piece", allOpen);
+        level.setBlockAndUpdate(pos.east(3), Blocks.AIR.defaultBlockState());
+        for (int x = 0; x < 3; x++) {
+            for (int y = 0; y < 3; y++) {
+                allClosed &= !level.getBlockState(pos.offset(x, y, 0)).getValue(com.carpentersblocks.block.GarageDoorBlock.OPEN);
+            }
+        }
+        check(failures, "removing the signal closes every garage door piece", allClosed);
+        for (int x = 0; x < 3; x++) {
+            level.destroyBlock(top.east(x), false);
+            level.setBlockAndUpdate(top.east(x).above(), Blocks.AIR.defaultBlockState());
+        }
+        check(failures, "garage door removed", level.getBlockState(pos.east(1)).isAir());
+        level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(6), ItemEntity::isAlive).forEach(ItemEntity::remove);
+
+        // Crafted NBT: a slot never holds more than one item, and only blocks can be covers.
+        level.setBlockAndUpdate(pos, CBContent.BLOCK.get().defaultBlockState());
+        CoverableBlockEntity be = (CoverableBlockEntity) level.getBlockEntity(pos);
+        be.putItem(cover, new ItemStack(Items.STONE));
+        CompoundTag forged = be.save(new CompoundTag());
+        forged.getCompound("cbItems").getCompound(cover.id()).putByte("Count", (byte) 64);
+        forged.getCompound("cbItems").put(AttributeKey.of(AttributeType.COVER, AttributeLocation.UP).id(),
+            new ItemStack(Items.DIAMOND, 64).save(new CompoundTag()));
+        be.load(level.getBlockState(pos), forged);
+        check(failures, "a forged stack of 64 covers loads as one", be.getItem(cover).getCount() == 1);
+        check(failures, "a forged non-block cover is ignored",
+            !be.has(AttributeKey.of(AttributeType.COVER, AttributeLocation.UP)));
+
+        // Moving a block with its contents (/clone ... move) must not also drop the contents.
+        be.clearContent();
+        level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+        check(failures, "a cleared block drops nothing",
+            level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(3), ItemEntity::isAlive).isEmpty());
+
+        // Structure rotation: four quarter turns are the identity, one turn changes the state.
+        BlockState slope = CBContent.SLOPE.get().defaultBlockState();
+        BlockState turned = slope.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90);
+        check(failures, "rotating a slope changes it", turned != slope);
+        check(failures, "four quarter turns of a slope are the identity",
+            turned.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90).rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_180) == slope);
+        BlockState doorState = door.defaultBlockState();
+        check(failures, "rotating a door turns its facing",
+            doorState.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90).getValue(com.carpentersblocks.block.DoorBlock.FACING)
+                == doorState.getValue(com.carpentersblocks.block.DoorBlock.FACING).getClockWise());
+
+        // A collapsible block lowered to nothing is not a full cube for things placed on it.
+        com.carpentersblocks.block.CollapsibleBlock collapsible = com.carpentersblocks.registry.CBBlocks.COLLAPSIBLE.get();
+        check(failures, "collapsible block has a dynamic shape", collapsible.hasDynamicShape());
     }
 
     /** Behaviour that needs a world: plate triggers, sensor, rain, hatch support. */

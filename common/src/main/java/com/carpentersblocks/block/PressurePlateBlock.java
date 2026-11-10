@@ -33,10 +33,10 @@ import java.util.function.Predicate;
  */
 public class PressurePlateBlock extends PolarityBlock {
     public enum Trigger implements StringRepresentable {
-        PLAYER(e -> e instanceof Player && !e.isSpectator()),
+        PLAYER(e -> e instanceof Player && !e.isIgnoringBlockTriggers()),
         MONSTER(e -> e instanceof Enemy),
         ANIMAL(e -> e instanceof Animal),
-        ALL(e -> !e.isSpectator());
+        ALL(e -> !e.isIgnoringBlockTriggers());
 
         final Predicate<Entity> matches;
 

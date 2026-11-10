@@ -1,13 +1,13 @@
 modLoader = "javafml"
 loaderVersion = "[36,)"
 license = "LGPL-2.1"
-issueTrackerURL = "https://github.com/Mineshopper/carpentersblocks/issues"
 
 [[mods]]
 modId = "carpentersblocks"
 version = "${version}"
 displayName = "Carpenter's Blocks"
-authors = "Mineshopper (original mod)"
+authors = "disaev"
+credits = "Mineshopper and contributors: the original Carpenter's Blocks, whose design and textures this rewrite uses (LGPL-2.1)"
 logoFile = "pack.png"
 description = '''
 Slopes and vanilla-inspired blocks that take covers, side covers, dyes and illumination.
@@ -16,7 +16,7 @@ Slopes and vanilla-inspired blocks that take covers, side covers, dyes and illum
 [[dependencies.carpentersblocks]]
 modId = "forge"
 mandatory = true
-versionRange = "[36,)"
+versionRange = "[36.2,)"
 ordering = "NONE"
 side = "BOTH"
 
