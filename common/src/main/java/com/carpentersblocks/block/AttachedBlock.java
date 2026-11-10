@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * A block attached to a face of its support (1.7.10 {@code BlockSided}): buttons, levers,
- * pressure plates, daylight sensors, torches. {@link #FACING} points away from the support.
+ * pressure plates, torches. {@link #FACING} points away from the support.
  * Models are designed lying on the floor and rotated onto the support.
  */
 public abstract class AttachedBlock extends BoxedBlock {

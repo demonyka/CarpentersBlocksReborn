@@ -278,13 +278,20 @@ public final class CoverModelBuilder {
         return Minecraft.getInstance().getModelManager().getAtlas(TextureAtlas.LOCATION_BLOCKS).getSprite(texture);
     }
 
-    /** A face showing the whole sprite, world-aligned. */
+    /**
+     * A face showing its region of a sprite, world-aligned. The coordinates are pulled a
+     * hair towards the middle of the face, as vanilla does when baking JSON models: sampled
+     * exactly on a texel border, a tilted face (wall torch, lever stick) picks up the
+     * neighbouring texels, which are transparent around those few-pixel parts.
+     */
     private static BakedQuad bake(Polygon polygon, TextureAtlasSprite sprite, int tint) {
         float[] uvs = wrapped(polygon.uvs);
+        float centreU = (uvs[0] + uvs[2] + uvs[4] + uvs[6]) / 4, centreV = (uvs[1] + uvs[3] + uvs[5] + uvs[7]) / 4;
+        float shrink = Math.max(sprite.uvShrinkRatio(), 0.02F);
         float[] atlas = new float[8];
         for (int i = 0; i < 4; i++) {
-            atlas[i * 2] = sprite.getU(uvs[i * 2]);
-            atlas[i * 2 + 1] = sprite.getV(uvs[i * 2 + 1]);
+            atlas[i * 2] = sprite.getU(uvs[i * 2] + (centreU - uvs[i * 2]) * shrink);
+            atlas[i * 2 + 1] = sprite.getV(uvs[i * 2 + 1] + (centreV - uvs[i * 2 + 1]) * shrink);
         }
         return bake(polygon, atlas, sprite, tint);
     }

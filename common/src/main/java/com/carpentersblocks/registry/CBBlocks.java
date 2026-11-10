@@ -3,7 +3,6 @@ package com.carpentersblocks.registry;
 import com.carpentersblocks.block.BarrierBlock;
 import com.carpentersblocks.block.ButtonBlock;
 import com.carpentersblocks.block.CollapsibleBlock;
-import com.carpentersblocks.block.DaylightSensorBlock;
 import com.carpentersblocks.block.DoorBlock;
 import com.carpentersblocks.block.GarageDoorBlock;
 import com.carpentersblocks.block.GateBlock;
@@ -58,8 +57,6 @@ public final class CBBlocks {
         () -> new LeverBlock(circuit()), b -> new BlockItem(b, itemProps()), DEFAULT::apply);
     public static final Supplier<PressurePlateBlock> PRESSURE_PLATE = block("pressure_plate",
         () -> new PressurePlateBlock(circuit()), b -> new BlockItem(b, itemProps()), DEFAULT::apply);
-    public static final Supplier<DaylightSensorBlock> DAYLIGHT_SENSOR = block("daylight_sensor",
-        () -> new DaylightSensorBlock(wood()), b -> new BlockItem(b, itemProps()), DEFAULT::apply);
     public static final Supplier<TorchBlock> TORCH = block("torch",
         () -> new TorchBlock(circuit()), b -> new BlockItem(b, itemProps()), DEFAULT::apply);
     public static final Supplier<LadderBlock> LADDER = block("ladder",

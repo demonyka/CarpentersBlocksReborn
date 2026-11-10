@@ -180,6 +180,9 @@ final class LookScenario {
         shot("look_levers_close", X0 + 27, Y, Z - 0.9, 0, 58);
         shot("look_levers_close_side", X0 + 25.2, Y, Z + 0.5, -90, 50);
         shot("look_levers", X0 + 28.5, Y + 1.3, Z - 2.2, 0, 15);
+        shot("look_torch_wall_close_left", X0 + 33.4, Y + 0.1, Z - 0.6, 55, 5);
+        shot("look_torch_wall_close_right", X0 + 31.6, Y + 0.1, Z - 0.6, -55, 5);
+        shot("look_torch_wall_close_top", X0 + 32.5, Y + 0.9, Z - 0.3, 0, 60);
         shot("look_torches_wall", X0 + 33, Y + 1.2, Z - 1.6, 0, 0);
         shot("look_torches_wall_side", X0 + 31.2, Y + 1.5, Z + 0.4, -90, 5);
         shot("look_torches_floor", X0 + 35, Y + 0.9, Z - 4, 0, 15);

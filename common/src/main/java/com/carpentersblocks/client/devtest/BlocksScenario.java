@@ -65,7 +65,6 @@ final class BlocksScenario {
         row.add(l -> CBBlocks.LEVER.get().defaultBlockState());
         row.add(l -> CBBlocks.LEVER.get().defaultBlockState().setValue(LeverBlock.POWERED, true).setValue(LeverBlock.ALONG_X, true));
         row.add(l -> CBBlocks.PRESSURE_PLATE.get().defaultBlockState());
-        row.add(l -> CBBlocks.DAYLIGHT_SENSOR.get().defaultBlockState());
         row.add(l -> CBBlocks.TORCH.get().defaultBlockState());
         row.add(l -> CBBlocks.TORCH.get().defaultBlockState().setValue(TorchBlock.TYPE, TorchBlock.Type.LANTERN));
         row.add(l -> CBBlocks.LADDER.get().defaultBlockState().setValue(LadderBlock.PLACEMENT, LadderBlock.Placement.FREE_X));
@@ -91,7 +90,6 @@ final class BlocksScenario {
             .setValue(LadderBlock.STYLE, LadderBlock.Style.RAIL));
         row.add(l -> CBBlocks.LADDER.get().defaultBlockState().setValue(LadderBlock.PLACEMENT, LadderBlock.Placement.NORTH)
             .setValue(LadderBlock.STYLE, LadderBlock.Style.POLE));
-        row.add(l -> CBBlocks.DAYLIGHT_SENSOR.get().defaultBlockState().setValue(ButtonBlock.FACING, n));
         return row;
     }
 

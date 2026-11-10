@@ -130,7 +130,7 @@ public class TorchBlock extends AttachedBlock {
         List<Polygon> torch = new ArrayList<>();
         torch.addAll(Polygons.ofBox(Box.px(7, 0, 7, 9, 8, 9), 0));   // handle takes the cover
         for (Polygon face : Polygons.ofBox(Box.px(7, 8, 7, 9, 10, 9), HEAD)) {
-            torch.add(Polygons.fitUvs(face, 7, 6, 9, 8)); // the head is the 2x2 at u 7..9, v 6..8 (1.7.10)
+            torch.add(Polygons.fitUvs(face, 7, 7, 9, 9)); // the head is the 2x2 pixels at u 7..9, v 7..9 of its texture
         }
         if (!onWall(state)) {
             return torch;
@@ -150,7 +150,7 @@ public class TorchBlock extends AttachedBlock {
 
     @Override
     protected float[] fixedUv(BlockState state, Polygon polygon) {
-        return polygon.part == LANTERN_FLAME ? new float[] { 7, 6, 9, 8 } : null;
+        return polygon.part == LANTERN_FLAME ? new float[] { 7, 7, 9, 9 } : null;
     }
 
     @Override

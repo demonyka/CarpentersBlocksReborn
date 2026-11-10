@@ -150,7 +150,7 @@ public final class SmokeTest {
             com.carpentersblocks.registry.CBBlocks.STAIRS, com.carpentersblocks.registry.CBBlocks.COLLAPSIBLE,
             com.carpentersblocks.registry.CBBlocks.BARRIER, com.carpentersblocks.registry.CBBlocks.GATE,
             com.carpentersblocks.registry.CBBlocks.BUTTON, com.carpentersblocks.registry.CBBlocks.LEVER,
-            com.carpentersblocks.registry.CBBlocks.PRESSURE_PLATE, com.carpentersblocks.registry.CBBlocks.DAYLIGHT_SENSOR,
+            com.carpentersblocks.registry.CBBlocks.PRESSURE_PLATE,
             com.carpentersblocks.registry.CBBlocks.TORCH,
         };
         for (java.util.function.Supplier<?> supplier : simple) {
@@ -210,8 +210,37 @@ public final class SmokeTest {
         check(failures, "a broken garage door drops one item (got " + garageDrops + ")", garages == 1);
         garageDrops.forEach(ItemEntity::remove);
 
+        runRecipes(level, failures);
         runBehaviour(level, pos.east(4), failures);
         runRegressions(level, pos.east(12), failures);
+    }
+
+    /** Every item of the mod has a recipe that loaded on this server, and every recipe of the mod makes one of its items. */
+    private static void runRecipes(ServerLevel level, List<String> failures) {
+        java.util.Set<net.minecraft.world.item.Item> crafted = new java.util.HashSet<>();
+        int recipes = 0;
+        for (net.minecraft.world.item.crafting.Recipe<?> recipe : level.getRecipeManager().getRecipes()) {
+            if (recipe.getId().getNamespace().equals(CarpentersBlocks.MOD_ID)) {
+                recipes++;
+                net.minecraft.world.item.Item result = recipe.getResultItem().getItem();
+                crafted.add(result);
+                check(failures, "recipe " + recipe.getId() + " makes an item of the mod (" + result + ")",
+                    net.minecraft.core.Registry.ITEM.getKey(result).getNamespace().equals(CarpentersBlocks.MOD_ID));
+                check(failures, "recipe " + recipe.getId() + " has ingredients", !recipe.getIngredients().isEmpty());
+            }
+        }
+        List<String> missing = new ArrayList<>();
+        int items = 0;
+        for (net.minecraft.world.item.Item item : net.minecraft.core.Registry.ITEM) {
+            if (net.minecraft.core.Registry.ITEM.getKey(item).getNamespace().equals(CarpentersBlocks.MOD_ID)) {
+                items++;
+                if (!crafted.contains(item)) {
+                    missing.add(net.minecraft.core.Registry.ITEM.getKey(item).getPath());
+                }
+            }
+        }
+        check(failures, "every item has a recipe (missing " + missing + ")", missing.isEmpty());
+        CarpentersBlocks.LOGGER.info("[SmokeTest] {} items, {} recipes loaded", items, recipes);
     }
 
     /** Bugs found in review: each of these once crashed, duplicated or lost something. */
@@ -332,22 +361,6 @@ public final class SmokeTest {
         check(failures, "the plate releases when the monster leaves", !level.getBlockState(pos).getValue(com.carpentersblocks.block.PressurePlateBlock.POWERED));
         level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
 
-        // Daylight sensor (sleep threshold): on at noon, off at midnight.
-        com.carpentersblocks.block.DaylightSensorBlock sensor = com.carpentersblocks.registry.CBBlocks.DAYLIGHT_SENSOR.get();
-        level.setBlockAndUpdate(pos, sensor.defaultBlockState());
-        long time = level.getDayTime();
-        level.setDayTime(6000);
-        level.updateSkyBrightness();
-        sensor.tick(level.getBlockState(pos), level, pos, random);
-        check(failures, "daylight sensor is on at noon (saw " + level.getBlockState(pos).getValue(com.carpentersblocks.block.DaylightSensorBlock.LEVEL) + ")",
-            sensor.output(level.getBlockState(pos)) == 15);
-        level.setDayTime(18000);
-        level.updateSkyBrightness();
-        sensor.tick(level.getBlockState(pos), level, pos, random);
-        check(failures, "daylight sensor is off at midnight", sensor.output(level.getBlockState(pos)) == 0);
-        level.setDayTime(time);
-        level.updateSkyBrightness();
-        level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
 
         // Torch in the rain: lit -> smouldering -> out, and back once it stops.
         // (The rain level fades in over many ticks and its setter is client-only, so the rule
